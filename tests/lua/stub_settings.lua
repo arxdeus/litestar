@@ -114,3 +114,53 @@ function Settings.OpenToCategory(id)
 	if open then open(id) end
 end
 function HideUIPanel(f) if f and f.Hide then f:Hide() end end
+
+-- Blizzard_Menu's context menu (MenuUtil.CreateContextMenu) for tests: the
+-- generator runs at once into a description tree; stub.menus[#stub.menus] is
+-- the last one, its items { kind, text, children, fn, checked }.
+stub.menus = {}
+local function description(kind, text, fn, checked)
+	local d = { kind = kind, text = text, fn = fn, checked = checked, children = {}, enabled = true }
+	function d:CreateButton(t, f) local c = description("button", t, f); self.children[#self.children + 1] = c; return c end
+	function d:CreateTitle(t) local c = description("title", t); self.children[#self.children + 1] = c; return c end
+	function d:CreateDivider() local c = description("divider"); self.children[#self.children + 1] = c; return c end
+	function d:CreateCheckbox(t, is, f) local c = description("checkbox", t, f, is); self.children[#self.children + 1] = c; return c end
+	function d:CreateRadio(t, is, f) local c = description("radio", t, f, is); self.children[#self.children + 1] = c; return c end
+	function d:SetEnabled(on) self.enabled = on and true or false end
+	function d:SetTooltip(fn) self.tooltip = fn end
+	return d
+end
+MenuUtil = {
+	CreateContextMenu = function(owner, generator)
+		local root = description("root")
+		generator(owner, root)
+		local m = { root = root, owner = owner, shown = true }
+		function m:Close() self.shown = false end
+		function m:IsShown() return self.shown end
+		stub.menus[#stub.menus + 1] = m
+		return m
+	end,
+}
+-- Click the first item (depth-first) whose text contains `text`.
+function stub.clickMenu(text)
+	local m = stub.menus[#stub.menus]
+	local function walk(d)
+		for _, c in ipairs(d.children) do
+			if c.text and tostring(c.text):find(text, 1, true) and c.fn then c.fn(); return true end
+			if walk(c) then return true end
+		end
+	end
+	return m and walk(m.root) or false
+end
+function stub.menuText()
+	local m = stub.menus[#stub.menus]
+	local out = {}
+	local function walk(d, depth)
+		for _, c in ipairs(d.children) do
+			out[#out + 1] = string.rep("  ", depth) .. c.kind .. ":" .. tostring(c.text)
+			walk(c, depth + 1)
+		end
+	end
+	if m then walk(m.root, 0) end
+	return out
+end

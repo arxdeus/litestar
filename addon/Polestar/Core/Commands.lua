@@ -27,7 +27,6 @@ BINDING_NAME_POLESTAR_REOPEN_TAB = L["Reopen closed tab"]
 -- client looks these names up as globals; they contain spaces and a colon,
 -- so they can only be set through _G.
 _G["BINDING_NAME_CLICK PolestarQuestItemButton:LeftButton"] = L["Use quest item"]
-_G["BINDING_NAME_CLICK PolestarTargetButton:LeftButton"] = L["Target quest mob"]
 _G["BINDING_NAME_CLICK PolestarHearthButton:LeftButton"] = L["Use Hearthstone"]
 _G["BINDING_NAME_CLICK PolestarStepButton:LeftButton"] = L["Use the step button"]
 _G["BINDING_NAME_CLICK PolestarTravelButton:LeftButton"] = L["Use the travel button"]

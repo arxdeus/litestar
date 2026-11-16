@@ -1376,7 +1376,43 @@ end
 
 -- items: { { text, icon, checked, disabled, onClick, tip, color, confirm }, { separator = true }, ... }
 -- opts: { point = "TOPRIGHT", relPoint = "BOTTOMRIGHT", x = 0, y = -4, minWidth = 168 }
+-- Slim build: the game's own context menu (MenuUtil, Blizzard_Menu) when the
+-- client has it; Polestar's drawn menu only as a fallback. A `confirm` item
+-- asks in the game's dialog (W.Modal) instead of a second click.
+local blizzMenu
+local function blizzardMenu(anchor, items)
+	if not (MenuUtil and MenuUtil.CreateContextMenu) then return false end
+	blizzMenu = MenuUtil.CreateContextMenu(anchor, function(_, root)
+		for _, item in ipairs(items) do
+			if item.separator then
+				if root.CreateDivider then root:CreateDivider() end
+			else
+				local function run()
+					if item.disabled then return end
+					if item.confirm then
+						W.Modal({ title = item.text, text = item.tip, action = item.text, danger = true, onAccept = function() if item.onClick then item.onClick(item) end end })
+					elseif item.onClick then
+						item.onClick(item)
+					end
+				end
+				local d
+				if item.checked ~= nil and root.CreateCheckbox then
+					d = root:CreateCheckbox(item.text, function() return item.checked and true or false end, run)
+				else
+					d = root:CreateButton(item.text, run)
+				end
+				if d and item.disabled and d.SetEnabled then d:SetEnabled(false) end
+				if d and item.tip and d.SetTooltip then
+					d:SetTooltip(function(tooltip) GameTooltip_SetTitle(tooltip, item.text); GameTooltip_AddNormalLine(tooltip, item.tip) end)
+				end
+			end
+		end
+	end)
+	return true
+end
+
 function W.ShowMenu(anchor, items, opts)
+	if blizzardMenu(anchor, items) then return blizzMenu end
 	if not menu then buildMenu() end
 	opts = opts or {}
 	local pad, rowH = Theme.Metric("menuPad", MENU_PAD), Theme.Metric("menuRow", MENU_ROW)
@@ -1439,9 +1475,12 @@ end
 
 function W.HideMenu()
 	if menu and menu:IsShown() then menu:Hide() end
+	if blizzMenu and blizzMenu.Close then pcall(blizzMenu.Close, blizzMenu) end
+	blizzMenu = nil
 end
 
 function W.MenuShown(owner)
+	if blizzMenu and blizzMenu.IsShown and blizzMenu:IsShown() then return true end
 	return menu and menu:IsShown() and (not owner or menu.psOwner == owner) or false
 end
 
@@ -2233,7 +2272,25 @@ local function buildModal()
 	modal = s
 end
 
+-- Slim build: the game's own dialog (StaticPopup) when the client has it.
+local POPUP = "LITESTAR_CONFIRM"
+local function blizzardModal(spec)
+	if not (StaticPopupDialogs and StaticPopup_Show) or ns.GamepadUI() then return false end
+	local title, body = spec.title or "", spec.text or ""
+	StaticPopupDialogs[POPUP] = {
+		text = body ~= "" and (title ~= "" and (title .. "\n\n" .. body) or body) or title,
+		button1 = spec.action or L["OK"],
+		button2 = spec.cancel or L["Cancel"],
+		OnAccept = function() if spec.onAccept then spec.onAccept() end end,
+		OnCancel = function(_, _, reason) if reason ~= "override" and spec.onCancel then spec.onCancel() end end,
+		timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3, showAlert = spec.danger and true or nil,
+	}
+	StaticPopup_Show(POPUP)
+	return true
+end
+
 function W.Modal(spec)
+	if blizzardModal(spec) then return end
 	if not modal then buildModal() end
 	W.HideMenu()
 	local box = modal.Box

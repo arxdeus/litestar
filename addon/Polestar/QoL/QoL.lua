@@ -31,7 +31,7 @@ local defaults = {
 	itemButton = true,       -- quest item button
 	questLoot = true,        -- ... also shows a looted item that starts a quest you can take, glowing (QoL/QuestLoot.lua)
 	bagGlow = true,          -- the step's item glows in the bags
-	targetButton = true,     -- target macro button
+	targetButton = false,    -- slim build: the target button with the next name is gone (QoL.On reads it fixed)
 	targetPlate = true,      -- ... its icon shows the action, its name in the target's colour, the next names as small icons
 	targetAnnounce = false,  -- ... a chat line when its names change
 	guideNameTarget = false, -- opt in: extend navigation clicks to targeting, with shared marking settings
@@ -58,7 +58,10 @@ ns.RegisterDefaults("qol", defaults)
 
 local paths = {}
 -- Setting "qol.<key>" as a boolean.
+-- Slim build: settings that stay off whatever was saved.
+local FORCED_OFF = { targetButton = true, targetPlate = true, targetAnnounce = true }
 function QoL.On(key)
+	if FORCED_OFF[key] then return false end
 	local p = paths[key]
 	if not p then
 		p = "qol." .. key

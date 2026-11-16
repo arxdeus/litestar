@@ -123,7 +123,6 @@ function Maps.ShowMenu(anchor)
 		onClick = function() ns.SetHideKeepsArrow(not ns.HideKeepsArrow()) end }
 	items[#items + 1] = { separator = true }
 	items[#items + 1] = { text = L["Guides"], icon = "guides", onClick = open("SHOW_PICKER") }
-	items[#items + 1] = { text = L["Lookup"], icon = "search", onClick = open("SHOW_LOOKUP") }
 	items[#items + 1] = { text = L["Options"], icon = "sliders", onClick = open("SHOW_OPTIONS") }
 	W.ShowMenu(anchor, items, { point = "TOPRIGHT", relPoint = "BOTTOMLEFT", x = 4, y = 4 })
 end

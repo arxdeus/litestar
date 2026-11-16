@@ -1,7 +1,7 @@
 -- The options in the game's own Settings panel (Esc > Options > AddOns >
 -- Polestar), drawn by Blizzard's vertical layout: its checkboxes, sliders,
--- dropdowns and buttons, section headers and search. Slim build: this replaces
--- Polestar's own options window as the place settings live.
+-- dropdowns and buttons, section headers and search. Slim build: Polestar's
+-- own options window is gone; this is where settings live.
 --
 -- The rows come from the same registry the options window reads (UI/Options.lua
 -- filters it: O.Layout's pages, tabs and sections, the hidden and moved
@@ -10,11 +10,9 @@
 -- so the addon's own saved variables stay the only store, and a change made
 -- elsewhere (the guide window's menu) shows the next time the panel draws.
 --
--- One category, "Polestar", with a subcategory per page (Guide, Questing,
--- Discovery, ...); each tab of a page is a section header, its sections below
--- it as smaller headers when there are several. Pages drawn by hand (Community
--- guides, About) and colour or key-binding rows have no Blizzard control: they
--- stay in Polestar's window, which the last row of the main category opens.
+-- One category, "Polestar", with a subcategory per page (Guide, Questing);
+-- each tab of a page is a section header. Colour and key-binding rows have no
+-- Blizzard control and are left out (the game's Key Bindings has the keys).
 --
 -- Built once, after every module registered (PLAYER_LOGIN): Blizzard's layout
 -- has no way to remove a row, so late registrations wait for the next /reload.
@@ -186,28 +184,17 @@ function BS.Build()
 		end
 		for _, c in ipairs(s.controls) do row(sub.cat, sub.layout, c) end
 	end
-	-- The main category: what the addon is, and the window for the rest.
+	-- The main category: what the addon is, and its commands.
 	header(mainLayout, L["Leveling guides for World of Warcraft: Forever."])
 	if CreateSettingsButtonInitializer and mainLayout then
-		mainLayout:AddInitializer(CreateSettingsButtonInitializer(L["Community guides"], L["Open"], function() BS.OpenWindow("guidepacks") end,
-			L["Guides made by other players: switch them on or off, and choose where suggestions come from."], false))
-		mainLayout:AddInitializer(CreateSettingsButtonInitializer(L["About"], L["Open"], function() BS.OpenWindow("about") end,
-			L["Why Polestar exists, its commands and its credits."], false))
+		mainLayout:AddInitializer(CreateSettingsButtonInitializer(L["Choose guide"], L["Choose guide"], function()
+			if SettingsPanel and SettingsPanel:IsShown() and HideUIPanel and not (InCombatLockdown and InCombatLockdown()) then HideUIPanel(SettingsPanel) end
+			if UI.ShowPicker then UI.ShowPicker() end
+		end, L["Choose a guide"], false))
 	end
 	Settings.RegisterAddOnCategory(main)
 	UI.settingsCategory = main
 	return true
-end
-
--- Polestar's own window, for the pages Blizzard's layout cannot draw. The
--- game's panel closes first (never in combat: protected), as the old entry
--- did.
-function BS.OpenWindow(section)
-	local panel = SettingsPanel
-	if panel and panel.IsShown and panel:IsShown() and HideUIPanel and not (InCombatLockdown and InCombatLockdown()) then
-		HideUIPanel(panel)
-	end
-	if UI.ShowOptionsWindow then UI.ShowOptionsWindow(section) end
 end
 
 -- Open the game's panel on Polestar (or a page of it). False when it cannot.

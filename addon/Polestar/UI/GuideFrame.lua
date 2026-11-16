@@ -4075,7 +4075,7 @@ function GF.ApplySkin()
 	nav.Next:SetPoint("LEFT", nav.Steps.Count, "RIGHT", gap, 0)
 	local iw, ih, ig = Theme.Metric("guideIconBtnW", 24), Theme.Metric("guideIconBtnH", 24), Theme.Metric("guideIcon", 14)
 	-- The icon buttons right of Skip share the skin's sizes.
-	for _, key in ipairs({ "Menu", "Lookup", "Nearby" }) do
+	for _, key in ipairs({ "Menu", "Nearby" }) do
 		local b = rawget(nav, key)
 		if b then
 			b:SetSize(iw, ih)
@@ -4611,8 +4611,9 @@ local function build()
 	nav.Menu:SetPoint("RIGHT", nav, "RIGHT", -8, 0)
 	GF.menuButton = nav.Menu
 	-- Lookup opens the existing search section without changing the guide.
-	nav.Lookup = W.IconButton(nav, "search", 24, L["Lookup"], function() UI.ShowLookup() end)
-	nav.Lookup.psTipLines = { L["Search quests, NPCs, items, mounts and guides."] }
+	-- Slim build: no Lookup window; an empty anchor keeps the row's layout.
+	nav.Lookup = CreateFrame("Frame", nil, nav)
+	nav.Lookup:SetSize(0.01, 24)
 	nav.Lookup:SetPoint("RIGHT", nav.Menu, "LEFT", 0, 0)
 	-- Nearby services: left of the bug, right of Skip.
 	nav.Nearby = W.IconButton(nav, "icon-goto", 24, L["Nearby services"], openNearby)
@@ -4676,11 +4677,11 @@ local function build()
 		scrubAt = nil
 		UI.StepList.Toggle()
 	end)
-	for _, b in ipairs({ nav.Menu, nav.Lookup, nav.Nearby, nav.Next, nav.Prev, nav.Skip }) do hoverable(b) end
+	for _, b in ipairs({ nav.Menu, nav.Nearby, nav.Next, nav.Prev, nav.Skip }) do hoverable(b) end
 	-- Transparent chrome: the step number fades with its chevrons (nav.Steps
 	-- holds all three) and the title with them; a lone "3 / 8" over the world
 	-- would read as a stray number. Progress stays readable in the foot.
-	for _, c in ipairs({ nav.Menu, nav.Lookup, nav.Nearby, nav.Skip, nav.Steps, nav.Title }) do chrome[#chrome + 1] = c end
+	for _, c in ipairs({ nav.Menu, nav.Nearby, nav.Skip, nav.Steps, nav.Title }) do chrome[#chrome + 1] = c end
 
 	-- Body
 	body = CreateFrame("Frame", nil, F)

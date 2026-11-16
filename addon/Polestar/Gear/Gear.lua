@@ -956,7 +956,7 @@ ns.RegisterCommand("gear", function(rest)
 	rest = rest or ""
 	local sub, arg = rest:match("^(%a+)%s*(.-)%s*$")
 	if sub == "scales" then
-		if ns.UI and ns.UI.ShowScales then ns.UI.ShowScales() else Gear.PrintScales() end
+		Gear.PrintScales()
 		return
 	elseif sub == "import" then
 		if arg ~= "" then
