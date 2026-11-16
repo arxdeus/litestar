@@ -162,28 +162,6 @@ Theme.HexColor = hex
 -- DIRECTION_A_BLIZZARD.md §1); the washes of a skin are its own colours, not
 -- the house ink at the house alphas.
 local SKIN_PALETTES = {
-	halo = {
-		bg = hex("080604", 0.84), panel = hex("120E0A", 0.97), panelAlt = hex("FFFFFF", 0.06),
-		sidebar = hex("080604", 0), footer = hex("080604", 0), sky = hex("080604", 0),
-		text = hex("F4EFE6"), textDim = hex("C2B9A9"), textMuted = hex("8F8778"), textOff = hex("6E675C"),
-		title = hex("F4EFE6"), ink = hex("FFFFFF"), star = hex("FFFFFF", 0), shade = hex("000000"),
-		scrim = hex("080604"), onAccent = hex("17130E"), shadow = hex("080604", 0.72),
-		accent = hex("FFD100"),
-		veil = hex("080604", 0.6), veilWindow = hex("080604", 0.84), menuBg = hex("120E0A", 0.97),
-		inputBg = hex("000000", 0.35), control = hex("FFFFFF", 0.06),
-		accentLine = hex("FFD100", 0.35), padSelect = hex("FFD100", 0.12), chipAccent = hex("FFD100", 0.16),
-		separator = hex("FFFFFF", 0.12), rowLine = hex("FFFFFF", 0.08),
-		border = hex("FFFFFF", 0.14), divider = hex("FFFFFF", 0.12), hover = hex("FFFFFF", 0.07),
-		selected = hex("FFFFFF", 0.08), toggle = hex("FFFFFF", 0.16), track = hex("FFFFFF", 0.18),
-		progress = hex("FFFFFF", 0.12), chip = hex("FFFFFF", 0.08), box = hex("FFFFFF", 0.35),
-		thumb = hex("F4EFE6"), swatch = hex("FFFFFF", 0.25), watermark = hex("FFFFFF", 0.028), mover = hex("FFFFFF", 0.06),
-		success = hex("5FD068"), arrive = hex("5FD068"), todo = hex("FFD100"), warning = hex("FF9A3C"),
-		later = hex("FF9A3C"), danger = hex("FF9A3C"), manual = hex("B49CFF"), skipped = hex("5CC8D6"),
-		icon = hex("C2B9A9"), iconHover = hex("F4EFE6"), buttonText = hex("F4EFE6"), personName = hex("8CCBFF"), tabRest = hex("C2B9A9"),
-		rowLabel = hex("F4EFE6"), navRest = hex("C2B9A9"),
-		link = hex("8CCBFF"), npc = hex("8CCBFF"), quest = hex("FFE07A"), place = hex("F5AD85"),
-		rare = hex("FF8052"), dungeon = hex("A385FF"), discord = hex("5865F2"),
-	},
 	hearth = {
 		bg = hex("1E170D", 0.95), bgBottom = hex("090704", 0.95), panel = hex("000000", 0.92), panelAlt = hex("000000"),
 		sidebar = hex("000000", 0.3), footer = hex("000000", 0), sky = hex("2C200C"), skyBottom = hex("150F06"),
@@ -217,28 +195,14 @@ local function gamePalette(over)
 	for k, v in pairs(over) do p[k] = v end
 	return p
 end
-SKIN_PALETTES.forever = gamePalette({
-	bg = hex("000000", 0.96), bgBottom = hex("000000", 0.96), sidebar = hex("000000", 0.25),
-	textDim = hex("AE9D81"), tabRest = hex("FFD100"), icon = hex("CEB282"), iconHover = hex("F2D199"),
-	-- The Settings panel's labels and its list's rows: GameFontNormal, gold.
-	rowLabel = hex("FFD100"), navRest = hex("FFD100"),
-	separator = hex("AE9D81", 0.35), divider = hex("AE9D81", 0.35), accentLine = hex("AE9D81", 0.5),
-	border = hex("5C4A30"), windowEdge = hex("5C4A30"), hover = hex("FFD100", 0.1), selected = hex("FFD100", 0.14),
-})
 SKIN_PALETTES.blizzard = gamePalette({
 	bg = hex("000000", 0.96), bgBottom = hex("000000", 0.96), sidebar = hex("000000", 0.25),
 	icon = hex("E8E8E8"), iconHover = hex("FFFFFF"), tabRest = hex("FFD100"), rowLabel = hex("FFD100"), navRest = hex("FFD100"),
 	separator = hex("FFD100", 0.35), divider = hex("FFFFFF", 0.15), accentLine = hex("FFD100", 0.45),
 	border = hex("404040"), windowEdge = hex("404040"), hover = hex("FFFFFF", 0.08), selected = hex("FFD100", 0.14),
 })
-SKIN_PALETTES.classic = gamePalette({
-	bg = hex("101010", 0.85), bgBottom = hex("101010", 0.85), sidebar = hex("000000", 0),
-	icon = hex("FFD100"), iconHover = hex("FFFFFF"), tabRest = hex("FFD100"), rowLabel = hex("FFD100"), navRest = hex("FFD100"),
-	separator = hex("969696", 0.45), divider = hex("969696", 0.45), accentLine = hex("969696", 0.6),
-	border = hex("696969"), windowEdge = hex("696969"), hover = hex("FFFFFF", 0.08), selected = hex("FFD100", 0.14),
-})
 Theme.SKIN_PALETTES = SKIN_PALETTES
-Theme.SKIN_ORDER = { "polestar", "halo", "hearth", "forever", "blizzard", "classic" }
+Theme.SKIN_ORDER = { "blizzard" }
 -- Skins hidden from the picker while their issues are fixed. A saved value
 -- naming a hidden skin resolves to the house style at load; the raw saved
 -- value is left alone so the player's choice restores when the skin returns.
@@ -250,7 +214,7 @@ local HIDDEN_SKINS = {}
 Theme._testShowHidden = false
 -- The skins drawn in game colours and controls (the client's check boxes,
 -- sliders, red buttons, the game font with its hard shadow).
-local GAME_SKINS = { hearth = true, forever = true, blizzard = true, classic = true }
+local GAME_SKINS = { blizzard = true }
 Theme.GROUNDS = { "bg", "panel", "panelAlt", "sidebar", "footer", "sky" }
 
 -- Alphas of the ink washes, by role.
@@ -398,6 +362,7 @@ local FIXED = {
 	["ui.matchFont"] = false, ["ui.border"] = true, ["ui.borderColor"] = false, ["ui.borderAccent"] = false,
 	["ui.borderSize"] = 1, ["ui.band"] = false, ["ui.shadow"] = true,
 	["nav.arrowColor"] = false, ["nav.arrowNearColor"] = false,
+	["ui.style"] = "standard", ["ui.backing"] = "dark", ["ui.barShown"] = true, ["ui.textSize"] = 1, ["ui.bgOpacity"] = 0.94,
 }
 local function get(path)
 	local v = FIXED[path]
@@ -525,8 +490,7 @@ local P -- the resolved palette; rebuilt on the next read after a change
 -- a hidden skin is the house style (the raw saved value is kept so the
 -- player's choice restores when a hidden skin returns).
 function Theme.SkinKey()
-	local k = get("ui.skin")
-	return (SKIN_PALETTES[k] and (Theme._testShowHidden or not HIDDEN_SKINS[k])) and k or "polestar"
+	return "blizzard"
 end
 
 -- Whether the skin in use (or `key`) is drawn in the game's colours and
@@ -536,14 +500,7 @@ function Theme.GameSkin(key)
 end
 
 function Theme.SkinChoices()
-	return {
-		{ value = "polestar", text = ns.L["Polestar"] },
-		{ value = "halo", text = ns.L["Halo"] },
-		{ value = "hearth", text = ns.L["Hearth"] },
-		{ value = "forever", text = ns.L["WoW Forever"] },
-		{ value = "blizzard", text = ns.L["Blizzard"] },
-		{ value = "classic", text = ns.L["Classic"] },
-	}
+	return { { value = "blizzard", text = ns.L["Blizzard"] } }
 end
 
 -- The tokens the skins added, in the house style: what each one stands for
@@ -761,7 +718,7 @@ end
 -- Glyphs a skin draws its own way (DIRECTION_B_HALO.md §7: the report flag
 -- and the Nearby services house).
 local GAME_ICON = { bug = "flag", ["icon-goto"] = "house" }
-local SKIN_ICON = { halo = GAME_ICON, hearth = GAME_ICON, forever = GAME_ICON, blizzard = GAME_ICON, classic = GAME_ICON }
+local SKIN_ICON = { blizzard = GAME_ICON }
 
 -- A glyph's name in the skin in use.
 function Theme.Icon(name)
@@ -800,9 +757,9 @@ end
 function Theme.Band(parent, layer, sub, art)
 	sub = sub or -5
 	local sky = parent:CreateTexture(nil, layer or "BACKGROUND", nil, sub)
-	sky:SetTexture(Theme.Media("band"))
+	sky:SetTexture(Theme.Media("white")) -- slim build: the starlit band art is gone; the band stays hidden
 	local stars = parent:CreateTexture(nil, layer or "BACKGROUND", nil, sub + 1)
-	stars:SetTexture(Theme.Media("band-stars"))
+	stars:SetTexture(Theme.Media("white"))
 	stars:SetAllPoints(sky)
 	sky.psStars = stars
 	sky.psArt = art and true or nil
@@ -865,12 +822,11 @@ local FAMILIES = { fira = FIRA }
 
 -- The font a skin starts with (ui.font "skin", the default): the house
 -- style and the others use the game's, Halo uses Fira Sans.
-local SKIN_FONT = { polestar = "game", halo = "fira", hearth = "game", forever = "game", blizzard = "game", classic = "game" }
+local SKIN_FONT = { polestar = "game", blizzard = "game" }
 
 -- A skin's own sizes, where they differ from the ladder above (the handoff's
 -- typography: DIRECTION_B_HALO.md §2, the same in DIRECTION_A_BLIZZARD.md §2).
 local SKIN_ROLES = {
-	halo = { hero = { "semibold", 24 } },
 	hearth = { hero = { "semibold", 24 } },
 }
 
@@ -882,16 +838,6 @@ local SKIN_ROLES = {
 ---------------------------------------------------------------------------
 
 local METRICS = {
-	halo = {
-		row = 34, menuRow = 26, menuPad = 6, menuWidth = 260, servicesWidth = 290,
-		buttonH = 28, buttonPad = 14, dropdownW = 166, dropdownH = 26, chevron = 10, chevronInset = 8,
-		sliderW = 112, valueW = 56, checkbox = 16,
-		shellW = 930, shellH = 690, shellSidebar = 200, shellTabs = 32, shellPad = 28, shellFooter = 56,
-		pickerW = 1100, pickerH = 640, pickerDetail = 380, pickerSidebar = 230,
-		guidePad = 12, guideIconGap = 9, guideTabs = 28, guideNav = 32, guideNavBtn = 22, guideNavIcon = 12,
-		guideIconBtnW = 24, guideIconBtnH = 22, guideIcon = 13, guideRow = 22, guideCheck = 16,
-		guideProgress = 3, guideGrip = 8, guideFoot = 17, guideUpRow = 20, guideUpToggle = 26, guideNavGap = 2,
-	},
 	hearth = {
 		row = 28, menuRow = 22, menuPad = 6, menuWidth = 260, servicesWidth = 290,
 		buttonH = 22, buttonPad = 14, dropdownW = 170, dropdownH = 24, chevron = 10, chevronInset = 6,
@@ -905,11 +851,8 @@ local METRICS = {
 }
 -- The game's looks take Hearth's sizes and type; WoW Forever's guide window
 -- keeps its rows and the lit goal clear of its bronze border (#306).
-for _, k in ipairs({ "forever", "blizzard", "classic" }) do
-	METRICS[k] = METRICS.hearth
-	SKIN_ROLES[k] = SKIN_ROLES.hearth
-end
-METRICS.forever = setmetatable({ guidePad = 18, guideLitInset = 10, guideRowPad = 4, guideCheckIn = 10, guideCheckMiddle = true }, { __index = METRICS.hearth })
+METRICS.blizzard = METRICS.hearth
+SKIN_ROLES.blizzard = SKIN_ROLES.hearth
 Theme.METRICS = METRICS
 
 function Theme.Metric(key, house)
@@ -1008,7 +951,7 @@ local scripted = setmetatable({}, { __mode = "k" }) -- fontString -> its text's 
 -- Text shadows: the house style's soft 1, -1; Halo's 1 down at 90 % black
 -- (DIRECTION_B_HALO.md §2); Blizzard's hard 1, -1 black, as the game's.
 local HARD = { 1, -1, 1 }
-local SKIN_SHADOW = { halo = { 0, -1, 0.9 }, hearth = HARD, forever = HARD, blizzard = HARD, classic = HARD }
+local SKIN_SHADOW = { blizzard = HARD }
 
 local function paintShadow(fs)
 	if not fs.SetShadowOffset then return end
@@ -1604,127 +1547,7 @@ local function veilAlpha(f, token)
 	return math.min(1, a * scale)
 end
 
-local SKIN_PAINT = {
-	halo = {
-		window = function(f)
-			if f.psBare then return bare(f) end
-			local token = f.psGuide and "veil" or "veilWindow"
-			showVeil(f, token, veilAlpha(f, token))
-			local shown, size = Theme.WindowBorder()
-			if shown and (isColor(get("ui.borderColor")) or get("ui.borderAccent")) then
-				Theme.Border(f, Theme.Color("windowBorder"))
-			end
-		end,
-		panel = function(f)
-			if f.psBare then return bare(f) end
-			fill(f):SetVertexColor(Theme.Color("menuBg"))
-			Theme.Border(f, Theme.Color("separator"))
-		end,
-		sidebar = function(f) end,
-		inset = function(f)
-			fill(f):SetVertexColor(1, 1, 1, 0.04)
-		end,
-		button = function(f)
-			fill(f):SetVertexColor(Theme.Color("control"))
-			Theme.Border(f, Theme.Color("border"))
-			hoverWash(f)
-		end,
-		dropdown = function(f)
-			fill(f):SetVertexColor(Theme.Color("control"))
-			Theme.Border(f, Theme.Color("divider"))
-			bottomLine(f, "accentLine")
-			hoverWash(f)
-		end,
-		tile = function(f)
-			fill(f):SetVertexColor(1, 1, 1, 0.05)
-			hideBorder(f)
-			hoverWash(f)
-		end,
-		editbox = function(f)
-			fill(f):SetVertexColor(Theme.Color("inputBg"))
-			if f.psFocused then
-				local r, g, b = Theme.Accent()
-				Theme.Border(f, r, g, b, 0.8)
-			else
-				Theme.Border(f, Theme.Color("border"))
-			end
-		end,
-		checkbox = function(f)
-			HOUSE_PAINT.checkbox(f)
-			local d = f.psSkin
-			d.box:SetSize(16, 16)
-			fill(d.box):SetVertexColor(Theme.Color("inputBg"))
-			Theme.Border(d.box, Theme.Color("box"))
-		end,
-	},
-	hearth = {
-		-- Flat windows (Yendi, after playing it): the handoff's brown gradient
-		-- without the game's metal frame, edged by the window border setting
-		-- in a brown hairline (#5C4518) unless the player picked their own.
-		window = function(f)
-			if f.psBare then return bare(f) end
-			local a = veilAlpha(f, "bg")
-			local top, bottom = { Theme.Color("bg") }, { Theme.Color("bgBottom") }
-			top[4], bottom[4] = a, a
-			gradientFill(f, top, bottom)
-			local shown, size = Theme.WindowBorder()
-			if shown then
-				local br, bg, bb, ba = Theme.Color("windowBorder")
-				Theme.Border(f, br, bg, bb, ba, nil, size)
-			else
-				hideBorder(f)
-			end
-		end,
-		panel = function(f)
-			if f.psBare then return bare(f) end
-			local top, bottom = { Theme.Color("bg") }, { Theme.Color("bgBottom") }
-			top[4], bottom[4] = 0.97, 0.97
-			gradientFill(f, top, bottom)
-			Theme.Border(f, Theme.Color("frameEdgeDark"))
-		end,
-		tile = function(f)
-			fill(f):SetVertexColor(0, 0, 0, 0.4)
-			Theme.Border(f, Theme.Color("titleLine"))
-			hoverWash(f)
-		end,
-		sidebar = function(f)
-			fill(f):SetVertexColor(Theme.Color("sidebar"))
-		end,
-		inset = function(f)
-			fill(f):SetVertexColor(0, 0, 0, 0.45)
-		end,
-		-- The game's red button for text buttons (W.Button) alone; anything
-		-- else painted as a button (cards, rows, tiles) is a dark well edged
-		-- in brown.
-		button = function(f)
-			if f.psTextButton then return redButton(f) end
-			fill(f):SetVertexColor(0, 0, 0, 0.4)
-			Theme.Border(f, Theme.Color("titleLine"))
-			hoverWash(f)
-		end,
-		dropdown = function(f)
-			fill(f):SetVertexColor(Theme.Color("control"))
-			Theme.Border(f, Theme.Color("border"))
-			hoverWash(f)
-		end,
-		editbox = function(f)
-			fill(f):SetVertexColor(Theme.Color("inputBg"))
-			if f.psFocused then
-				local r, g, b = Theme.Accent()
-				Theme.Border(f, r, g, b, 0.8)
-			else
-				Theme.Border(f, Theme.Color("border"))
-			end
-		end,
-		checkbox = function(f)
-			HOUSE_PAINT.checkbox(f)
-			local d = f.psSkin
-			d.box:SetSize(15, 15)
-			gradientFill(d.box, { 0, 0, 0, 1 }, { 0.11, 0.11, 0.11, 1 })
-			Theme.Border(d.box, Theme.Color("box"))
-		end,
-	},
-}
+local SKIN_PAINT = {}
 Theme.SKIN_PAINT = SKIN_PAINT
 -- The paint helpers Theme/GameSkins.lua builds the game's looks from.
 Theme.Paint = { fill = fill, hoverWash = hoverWash, bare = bare, hideBorder = hideBorder, redButton = redButton, house = HOUSE_PAINT }

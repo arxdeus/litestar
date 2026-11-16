@@ -39,24 +39,9 @@ ns.RegisterDefaults("ui", {
 	instance = "hide", -- "show" | "hide": in dungeons, raids, battlegrounds and arenas, until the player opens it there; hidden by default, a healer asked for it out of the way
 	reduceMotion = false,
 	classCardSound = true, -- the class-quest card's and the class quest heads-up's chime (UI/ClassCard.lua, UI/ClassToast.lua)
-	skin = "blizzard", -- slim build: fixed to the game's own look (Theme.lua, FIXED)
-	font = "skin", -- "skin" (the game's in Polestar) | "opensans" | "game" | "inter" | "fira"
-	textSize = 1, -- 0.8..1.4: every text role's size against its own (Theme.FontSpec), apart from the window scale
-	scheme = "dusk", -- "dusk" | "night" | "graphite" | "ellesmere" (Polestar.Theme.SCHEMES)
-	accent = false, -- false: the scheme's (or EllesmereUI's) accent; { r, g, b }: your own
-	bgColor = false, -- false: the scheme's ground; { r, g, b }: your own
-	brightness = 0, -- -1..1: lifts or lowers every ground together
-	matchAccent = true, -- with EllesmereUI: follow its accent
-	classAccent = false, -- the accent follows the player's class colour
-	matchFont = false, -- with EllesmereUI: follow its font
+	skin = "blizzard", -- slim build: the game's own look only (Theme.lua, FIXED)
+	textSize = 1,
 	menuScale = 1, -- options and picker windows
-	-- Every window's frame (Theme.WindowBorder, the "windowBorder" token):
-	border = true, -- the window border
-	borderColor = false, -- false: the scheme's hairline (or the accent); { r, g, b }: your own
-	borderAccent = false, -- the border takes the accent
-	borderSize = 1, -- 1..4 physical pixels, growing outward
-	band = true, -- the starlit header band
-	shadow = true, -- the window drop shadow
 	pickerFaction = "auto", -- "auto" | "Alliance" | "Horde" | "All"
 	-- pickerCollapsed = { [folder id] = true }: the guide menu's Browse folders folded away (UI.Picker.IsCollapsed)
 	-- pos = { left, top } once the window has been moved

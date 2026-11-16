@@ -352,12 +352,8 @@ local BUILTIN = {
 	-- guide window's own look, the arrow. Every change repaints live, the
 	-- preview over Colour & type with it. The accent's sources sit together
 	-- in their own section.
-	{ page = LOOK, key = "appearance", icon = "palette", order = 20, tab = L["Colour & type"], section = L["Type & motion"],
-		subtitle = L["Colours, type, window frames and the arrow. Everything repaints as you change it; right-click a setting to reset it."], controls = {
-		{ kind = "slider", key = "ui.bgOpacity", label = L["Background opacity"], min = 0, max = 1, step = 0.05, format = percent,
-			help = L["The background opacity of every Polestar window: how much of the world shows through. Right-click to reset."] },
-		{ kind = "slider", key = "ui.textSize", label = L["Text size"], min = 0.8, max = 1.4, step = 0.05, format = percent, search = "font size, bigger text, smaller text, readability",
-			help = L["The size of Polestar's text, apart from the window scale. Changes at once. Right-click to reset."] },
+	{ page = LOOK, key = "appearance", icon = "palette", order = 20, tab = L["Windows"], section = L["Type & motion"],
+		subtitle = L["The windows and the arrow, in the game's own look. Right-click a setting to reset it."], controls = {
 		{ kind = "toggle", key = "ui.reduceMotion", label = L["Reduce motion"], help = L["No sliding or popping; fades stay short."],
 			search = "animations, motion sickness, fps, frame rate, performance, lag, stutter, cpu, slow" },
 		{ kind = "toggle", key = "ui.classCardSound", label = L["Class quest chime"],
@@ -365,19 +361,10 @@ local BUILTIN = {
 			help = L["A short chime the first time a class quest chain's card shows. Off while the game's sound effects are off."] },
 	} },
 	{ page = LOOK, tab = L["Windows"], section = L["Guide window"], controls = {
-		{ kind = "dropdown", key = "ui.style", label = L["Style"], help = L["Transparent drops every background and border; text is outlined and the controls appear when you hover the window."],
-			choices = { { value = "standard", label = L["Standard"] }, { value = "transparent", label = L["Transparent"] } } },
-		{ kind = "dropdown", key = "ui.backing", label = L["Backing"], child = true, disabled = function() return ns.Get("ui.style") ~= "transparent" end,
-			help = L["With Transparent: Soft lays a light shade behind each line of text, Dark a dark backing behind the whole window. Off: the outlined text alone on the world."],
-			search = "transparent, background, shade, dark, readable, contrast",
-			choices = { { value = "soft", label = L["Soft"] }, { value = "dark", label = L["Dark"] }, { value = "none", label = L["Off"] } } },
-		{ kind = "toggle", key = "ui.barShown", label = L["Keep the bar shown"], child = true, disabled = function() return ns.Get("ui.style") ~= "transparent" end,
-			help = L["With Transparent, the tabs and the step bar stay on screen instead of only under the cursor."],
-			search = "transparent, bar, header, readable, always, show" },
 		{ kind = "slider", key = "ui.scale", label = L["Window scale"], min = 0.6, max = 1.6, step = 0.05, format = percent, search = "size, bigger, smaller, zoom" },
 		{ kind = "slider", key = "ui.width", label = L["Width"], min = 260, max = 560, step = 10, format = "%d", search = "wide, wider, size" },
 		{ kind = "slider", key = "ui.opacity", label = L["Window opacity"], min = 0.3, max = 1, step = 0.05, format = percent, search = "transparency, alpha, see through",
-			help = L["The whole guide window, text included. The background's own opacity is under Colour & type."] },
+			help = L["The whole guide window, text included."] },
 	} },
 	{ page = LOOK, tab = L["Windows"], section = L["Menus"], controls = {
 		{ kind = "slider", key = "ui.menuScale", label = L["Menu scale"], min = 0.7, max = 1.4, step = 0.05, format = percent, release = true,

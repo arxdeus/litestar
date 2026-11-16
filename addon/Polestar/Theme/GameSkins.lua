@@ -1,4 +1,5 @@
--- Polestar.Theme, the game's own skins (docs/ARCHITECTURE.md, "Skins"):
+-- Polestar.Theme, the game's own look (slim build: Blizzard Style only;
+-- docs/ARCHITECTURE.md, "Skins" describes the full set):
 -- Polestar drawn in the client's art, the three looks EllesmereUI offers on
 -- the Forever client (only their visual spec is followed; nothing of that
 -- addon is used), composed the way the client's own templates compose them
@@ -92,16 +93,6 @@ local KITS = {
 	-- ButtonFrameTemplateNoPortrait with the Forever client's offsets
 	-- (camelot/NineSliceLayoutOverrides.lua: the right corners 2 in, the
 	-- bottom ones 8 down) and its art's sizes (2x only: 95 a side).
-	forever = settingsParts({
-		source = "atlas",
-		metalOut = { 8, 16, 2, 8 },
-		metalSize = { { 95, 95 }, { 128, 95 }, { 95, 95 }, { 95, 128 }, false, { 95, 128 }, { 95, 100 }, { 128, 100 }, { 95, 100 } },
-		closeSize = 28, closeAt = { 0, 3 },
-		slim = "UI-HUD-ActionBar-Frame",
-		card = "common-button-list-small", cardHover = "common-button-list-small-hover", cardSelected = "common-button-list-small-selected",
-		rowLit = "common-button-list-small-selected",
-		status = { bg = "Legacy-Progressbar-BG", fill = "Legacy-Progressbar-Fill", frame = "Legacy-Progressbar-Frame" },
-	}),
 	-- ButtonFrameTemplateNoPortrait's mainline offsets, the retail art.
 	blizzard = settingsParts({
 		source = "retail",
@@ -110,17 +101,6 @@ local KITS = {
 		headerBar = "ui-damagemeters-header-bar",
 		status = { bg = "ui-damagemeters-bar-shadowbg", edge = "ui-damagemeters-bar-shadowedge" },
 	}),
-	classic = {
-		source = "file",
-		tab = { "tab" }, tabActive = { "tabActive" },
-		check = "check", checkOn = "checkOn",
-		slThumb = "slThumb",
-		ddArrow = "ddArrow",
-		close = "close", closeDown = "closeDown", closeLit = "closeLit",
-		prev = "prev", next = "next",
-		rowLit = "rowLit", navLit = "selected",
-		scroll = { up = "scrollUp", down = "scrollDown", knob = "knob", width = 16, inset = 16 },
-	},
 }
 Theme.KITS = KITS
 
@@ -552,27 +532,6 @@ end
 
 -- The guide window (and the toasts, psLight).
 local GUIDE = {
-	forever = function(f, kit)
-		body(f, 0, 0, 0, 0.96 * opacity(f))
-		-- The micro menu box's bronze line (55 units, its chamfered corners 12),
-		-- the line 3 units in from the art's edge: laid 3 out so it runs on the
-		-- window's edge. Its filled middle is left out: the body is the window's own.
-		-- The border starts at the tab strip's foot (f.psStrip), anchored so it
-		-- follows the strip as it shows and hides (compact mode) without a repaint.
-		-- At the window's own level, under its content: the art's inner shade
-		-- (all but its outer 3 units) drew over the nav row and the progress
-		-- bar at f+6 (#306).
-		local o = child(f, "edge", 0)
-		o:EnableMouse(false)
-		o:ClearAllPoints()
-		if f.psStrip then
-			o:SetPoint("TOPLEFT", f.psStrip, "BOTTOMLEFT", 0, 0)
-		else
-			o:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 0)
-		end
-		o:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, 0)
-		sliced(f, "slim", kit, kit.slim, o, { 3, 0, 3, 3 }, "BORDER", 0, true)
-	end,
 	blizzard = function(f)
 		local a = opacity(f)
 		local t = body(f, 0, 0, 0, 0.96 * a)
@@ -588,16 +547,6 @@ local GUIDE = {
 		else
 			band:SetVertexColor(0, 0, 0, 0.8 * a)
 		end
-	end,
-	classic = function(f)
-		local a = opacity(f)
-		local t = body(f, 0.063, 0.063, 0.063, 0.9 * a, 3)
-		t:SetTexture(CLASSIC.tile[1], "REPEAT", "REPEAT")
-		if t.SetHorizTile then t:SetHorizTile(true); t:SetVertTile(true) end
-		local o = child(f, "edge", 6)
-		o:EnableMouse(false)
-		o:SetAllPoints(f)
-		rim(f, o)
 	end,
 }
 
@@ -641,30 +590,7 @@ local function bigMetal(f, kit)
 end
 
 local BIG = {
-	forever = bigMetal,
 	blizzard = bigMetal,
-	-- The vanilla options window: the dialog box (its border 11 units
-	-- in), the header plate on its top edge with the title in it, the panel
-	-- close button in its corner.
-	classic = function(f, kit)
-		local a = opacity(f)
-		body(f, 0, 0, 0, a)
-		local d = backdrop(f, "dialog", DIALOG, 1, 1, 1, a, 11, 0)
-		local o = child(f, "metal", 500)
-		o:EnableMouse(false)
-		o:SetAllPoints(d)
-		local plate = tex(f, "plate", "ARTWORK", 0, o)
-		file(plate, CLASSIC.header[1])
-		plate:ClearAllPoints()
-		plate:SetPoint("TOP", o, "TOP", 0, 12)
-		plate:SetSize(256, 64)
-		title(f, o, "TOP", plate, 0, -14)
-		local bar = dragBar(f, o)
-		bar:ClearAllPoints()
-		bar:SetPoint("TOPLEFT", plate, "TOPLEFT", 50, 0)
-		bar:SetPoint("BOTTOMRIGHT", plate, "BOTTOMRIGHT", -50, 24)
-		closeButton(f, o, kit, 32, "TOPRIGHT", -4, -4)
-	end,
 }
 
 -- Menus, popups and the other panels: the dropdown menu's ground (Menu

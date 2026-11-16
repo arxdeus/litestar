@@ -47,7 +47,7 @@ local HEAD_H = 16 -- a skill range's heading over its first card
 local GROUP_VERB = { npc = "talk", object = "interact", here = "goto" } -- as the step card's
 
 local function GF() return UI.GuideFrame end
-local function transparent() return ns.Get("ui.style") == "transparent" end
+local function transparent() return false end -- slim build: the standard window only
 -- A string that follows the window's style (outlined when transparent).
 local function T(parent, role, color) return GF().Text(parent, role, color) end
 

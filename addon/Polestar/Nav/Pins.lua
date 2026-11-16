@@ -390,16 +390,9 @@ end
 -- default, takes the skin's: Polestar's, Halo's, or Hearth's for Hearth and
 -- the game's own looks.
 ns.RegisterDefaults("nav", { mapIcons = "skin", minimapIconSize = 1 })
-local MEDALS = {
-	polestar = MAP_MEDIA .. "medallion-polestar", halo = MAP_MEDIA .. "medallion-halo", hearth = MAP_MEDIA .. "medallion-hearth",
-}
-function Pins.IconPack(v)
-	if v == nil then v = ns.Get and ns.Get("nav.mapIcons") end
-	if MEDALS[v] or v == "bare" then return v end
-	local T = ns.Theme
-	local key = type(T) == "table" and type(T.SkinKey) == "function" and T.SkinKey() or "polestar"
-	return MEDALS[key] and key or "hearth"
-end
+-- Slim build: the game look's medallion (Hearth's) only.
+local MEDALS = { hearth = MAP_MEDIA .. "medallion-hearth" }
+function Pins.IconPack() return "hearth" end
 
 local function themeColor(name, r, g, b)
 	local T = ns.Theme
@@ -499,7 +492,7 @@ local function applyMark(f, p, size, path)
 	f.bare = p.medal == false or pack == "bare"
 	if p.medal == false then medal = size end
 	f.medalPx, f.sizePx, f.footPx = medal, size, medal
-	f.medal:SetTexture(MEDALS[pack] or MEDALS.polestar)
+	f.medal:SetTexture(MEDALS[pack] or MEDALS.hearth)
 	f.medal:SetSize(medal, medal)
 	f.medal:SetVertexColor(1, 1, 1, a)
 	local ring = type(p.ring) == "table" and p.ring or nil
