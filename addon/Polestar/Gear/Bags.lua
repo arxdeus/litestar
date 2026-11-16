@@ -10,7 +10,7 @@
 --   Gear.Bags.IsUpgrade(link) -> bool   -- the verdict an arrow shows
 --   Gear.Bags.Redraw()                  -- repaint the shown bags now
 --
--- Three bag views:
+-- Two bag views:
 --   * The client's bags (Blizzard_UIPanels_Game Mainline ContainerFrame.lua,
 --     which Forever loads): each container frame's UpdateItems is post-hooked
 --     on the frame itself (ContainerFrameMixin's functions are copied onto
@@ -27,16 +27,6 @@
 --   * Baganator: a corner widget (top-left, first), the way Baganator shows
 --     Pawn's arrow; it hides and places the arrow itself. Registered as this
 --     file loads when Baganator is in, else when it loads.
---   * EllesmereUI Bags (EllesmereUIBags), which replaces the client's bag
---     frames, so there is nothing to hook: it runs the painters registered with
---     EUI_Bags.RegisterItemOverlayIcon(name, fn(button, data)) on every slot it
---     paints (grid and list, bags, reagent bag and bank). The arrow is a texture
---     on the button's _textOverlay, bottom-left: top-left is where it shows
---     the item's level (btn.ItemLevelText), which the arrow would cover, and
---     bottom-right is its own Pawn arrow's. Registered as this file loads when
---     it is in, else when EllesmereUIBags loads. New verdicts re-mark the
---     shown slots from the link each last painted, so its window is not
---     rebuilt (a full RefreshInventory) for them, in or out of combat.
 --
 -- New verdicts (GEAR_UPDATED: equipment, bags, level, spec, item data, gear
 -- settings) repaint the shown bags at most once every REDRAW seconds.
@@ -81,6 +71,7 @@ local function paint(t)
 end
 
 local arrows = setmetatable({}, { __mode = "k" }) -- item button -> arrow texture (the client's bags)
+local widgets = setmetatable({}, { __mode = "k" }) -- arrow textures made for Baganator
 
 ---------------------------------------------------------------------------
 -- The client's bags
@@ -146,12 +137,56 @@ hookBags()
 ns.OnLogin(hookBags)
 
 ---------------------------------------------------------------------------
+-- Baganator
+---------------------------------------------------------------------------
+
+local baganator = false
+
+local function baganatorAPI()
+	local B = _G.Baganator
+	local API = type(B) == "table" and B.API
+	if type(API) == "table" and API.RegisterCornerWidget then return API end
+	return nil
+end
+
+local function registerBaganator()
+	if baganator then return true end
+	local API = baganatorAPI()
+	if not API then return false end
+	baganator = true
+	API.RegisterCornerWidget(L["Polestar"], WIDGET, function(_, details)
+		return Bags.IsUpgrade(type(details) == "table" and details.itemLink or nil)
+	end, function(button)
+		local t = button:CreateTexture(nil, "OVERLAY")
+		t:SetSize(BADGE, BADGE)
+		t:SetTexture(media())
+		paint(t)
+		widgets[t] = true
+		return t
+	end, { corner = "top_left", priority = 1 })
+	return true
+end
+
+local function onAddonLoaded(_, name)
+	if name == "Baganator" and registerBaganator() then
+		ns.UnregisterEvent("ADDON_LOADED", onAddonLoaded)
+	end
+end
+
+if not registerBaganator() then ns.RegisterEvent("ADDON_LOADED", onAddonLoaded) end
+
+---------------------------------------------------------------------------
 -- Keeping the arrows fresh
 ---------------------------------------------------------------------------
 
 function Bags.Redraw()
 	for _, f in ipairs(containerFrames()) do
 		if hooked[f] and f:IsShown() then onUpdateItems(f) end
+	end
+	local API = baganator and baganatorAPI()
+	if API and API.RequestItemButtonsRefresh and (not API.IsCornerWidgetActive or API.IsCornerWidgetActive(WIDGET)) then
+		local reasons = Baganator.Constants and Baganator.Constants.RefreshReason
+		API.RequestItemButtonsRefresh(reasons and reasons.ItemWidgets and { reasons.ItemWidgets } or nil)
 	end
 end
 
@@ -172,5 +207,6 @@ ns.On("POLESTAR_HIDDEN", schedule)
 if ns.Theme and ns.Theme.OnChanged then
 	ns.Theme.OnChanged(function()
 		for _, t in pairs(arrows) do paint(t) end
+		for t in pairs(widgets) do paint(t) end
 	end)
 end
