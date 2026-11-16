@@ -101,7 +101,105 @@ local function sectionOf(t, name)
 	return s
 end
 
-local function add(spec, builtin)
+-- Slim build: a short options screen. Settings that only fine-tune a
+-- feature, and the copies of settings that sat on two pages, stay at their
+-- saved value (or default) and are not shown. Whole pages: Quality of Life
+-- (it only repeated other pages' settings), Discovery's Characters and
+-- Group quests tabs. Control keys here, or "label:<English label>" for
+-- controls without a settings key.
+local HIDDEN = {}
+for _, k in ipairs({
+	-- Guide window
+	"ui.notesOpen", "ui.upcomingOpen", "ui.newInForever", "ui.lockHud", "ui.barsBottom",
+	-- Dynamic Questing: the switch stays, its tuning goes
+	"behavior.whileHereRadius", "behavior.whileHereTurnins", "behavior.whileHereTurninSeconds",
+	"behavior.whileHereFlights", "behavior.whileHereSound", "behavior.whileHereStepKey",
+	-- Arrow and routes
+	"nav.detourCaption", "nav.routeStyle", "nav.nearbyMenu", "nav.journeySteps", "nav.blizzardWaypoint",
+	"nav.alertBanner", "nav.alertSound", "nav.alertFlash", "label:Show a sample alert",
+	-- Guides
+	"behavior.warnClosing", "behavior.groupQuests", "behavior.lostQuests", "behavior.autoSelectGuide",
+	"behavior.routeChoice", "behavior.offerClassQuests",
+	-- Appearance
+	"ui.classCardSound", "ui.menuScale", "nav.minimapIconSize",
+	-- Map
+	"nav.upcomingPins", "nav.trailDots", "qol.questLevelWindow", "qol.lowLevelQuests", "qol.objectiveSpots",
+	"qol.objectiveAreaAlpha", "qol.minimapObjectives", "qol.questMarkerSize", "qol.guideHighlight", "qol.guideDim",
+	-- Questing
+	"qol.questDB", "qol.questSellWarning", "qol.nameplateIconSide", "qol.questTimerAlerts",
+	"gear.pickTooltip", "gear.minUpgrade", "gear.useBags", "label:Manage custom weights",
+	-- Buttons
+	"qol.targetPlate", "qol.targetAnnounce", "qol.guideNameTarget", "qol.markTarget", "qol.pingTarget",
+	"qol.markMob", "qol.markNpc", "qol.stepInteract", "qol.buttonTextSide",
+	-- Discovery
+	"lookup.altClick", "lookup.mounts", "dungeons.headsUp",
+}) do HIDDEN[k] = true end
+local HIDDEN_PAGES = { [L["Quality of Life"]] = true }
+-- Whole sections moved to another page: { page, tab, section } -> where they go.
+-- Appearance and Map fold into Guide, so it holds the window, the arrow and the map.
+local function moveKey(page, tab, section) return page .. "\1" .. (tab or "") .. "\1" .. (section or "") end
+local SECTION_MOVES = {
+	[moveKey(L["Appearance"], L["Windows"], L["Guide window"])] = { L["Guide"], L["Window"], L["Look"] },
+	[moveKey(L["Appearance"], L["Windows"], L["Type & motion"])] = { L["Guide"], L["Window"], L["Look"] },
+	[moveKey(L["Appearance"], L["Arrow"], L["Arrow"])] = { L["Guide"], L["Arrow & routes"], L["Arrow"] },
+	[moveKey(L["Map"], L["Guide & quests"], L["Guide"])] = { L["Guide"], L["Map"], L["Guide"] },
+	[moveKey(L["Map"], L["Guide & quests"], L["Quest markers"])] = { L["Guide"], L["Map"], L["Quest markers"] },
+	[moveKey(L["Guide"], L["Window"], L["Combat"])] = { L["Guide"], L["Window"], L["Show and hide"] },
+	[moveKey(L["Guide"], L["Window"], L["Dungeons and battlegrounds"])] = { L["Guide"], L["Window"], L["Show and hide"] },
+	[moveKey(L["Guide"], L["Window"], L["Dynamic Questing"])] = { L["Guide"], L["Window"], L["What it shows"] },
+	[moveKey(L["Guide"], L["Automation"], L["Quests"])] = { L["Guide"], L["Automation"], L["Guides"] },
+	[moveKey(L["Questing"], L["Rewards & gear"], L["Quest rewards"])] = { L["Questing"], L["Rewards & gear"], L["Gear advice"] },
+}
+local HIDDEN_TABS = { [L["Characters"]] = true, [L["Group quests"]] = true }
+-- Kept from Quality of Life, moved to the page where they belong.
+local MOVED = {
+	["qol.levelUpSpells"] = { L["Guide"], L["Automation"], L["Guides"] },
+	["qol.oldRanks"] = { L["Guide"], L["Automation"], L["Guides"] },
+	["qol.ridingReminder"] = { L["Guide"], L["Automation"], L["Guides"] },
+	["qol.deathHelper"] = { L["Guide"], L["Arrow & routes"], L["Arrow"] },
+	["qol.xpTracker"] = { L["Guide"], L["Window"], L["What it shows"] },
+	["qol.xpTargetMark"] = { L["Guide"], L["Window"], L["What it shows"] },
+	["qol.flightHighlight"] = { L["Guide"], L["Arrow & routes"], L["Routes"] },
+}
+local function hiddenControl(c)
+	if c.key and HIDDEN[c.key] then return true end
+	local label = type(c.label) == "string" and c.label or nil
+	if label then
+		for k in pairs(HIDDEN) do
+			if k:sub(1, 6) == "label:" and L[k:sub(7)] == label then return true end
+		end
+	end
+	return false
+end
+
+local add
+local function addSlim(spec, builtin)
+	local controls, moved = {}, {}
+	for _, c in ipairs(spec.controls or {}) do
+		local to = c.key and MOVED[c.key]
+		if to then
+			moved[#moved + 1] = { to, c }
+		elseif not hiddenControl(c) then
+			controls[#controls + 1] = c
+		end
+	end
+	for _, m in ipairs(moved) do
+		add({ page = m[1][1], tab = m[1][2], section = m[1][3], controls = { m[2] } }, builtin)
+	end
+	if HIDDEN_PAGES[spec.page] or HIDDEN_TABS[spec.tab] then return end
+	local copy = {}
+	for k, v in pairs(spec) do copy[k] = v end
+	copy.controls = controls
+	local to = SECTION_MOVES[moveKey(spec.page, spec.tab, spec.section)]
+	if to then
+		copy.page, copy.tab, copy.section = to[1], to[2], to[3]
+		copy.key, copy.icon, copy.order, copy.subtitle, copy.preview = nil, nil, nil, nil, nil
+		if #controls == 0 then return end
+	end
+	add(copy, builtin)
+end
+
+function add(spec, builtin)
 	local p = pageOf(spec.page, spec.icon, spec.order, builtin, spec.key)
 	if spec.subtitle then p.subtitle = spec.subtitle end
 	if spec.custom then p.custom = spec.custom end
@@ -355,6 +453,16 @@ local BUILTIN = {
 			help = L["A short chime the first time a class quest chain's card shows. Off while the game's sound effects are off."] },
 	} },
 	{ page = LOOK, tab = L["Windows"], section = L["Guide window"], controls = {
+		{ kind = "dropdown", key = "ui.style", label = L["Style"], help = L["Transparent drops every background and border; text is outlined and the controls appear when you hover the window."],
+			search = "transparent, transparency, see through, background, clear",
+			choices = { { value = "standard", label = L["Standard"] }, { value = "transparent", label = L["Transparent"] } } },
+		{ kind = "dropdown", key = "ui.backing", label = L["Backing"], child = true, disabled = function() return ns.Get("ui.style") ~= "transparent" end,
+			help = L["With Transparent: Soft lays a light shade behind each line of text, Dark a dark backing behind the whole window. Off: the outlined text alone on the world."],
+			search = "transparent, background, shade, dark, readable, contrast",
+			choices = { { value = "soft", label = L["Soft"] }, { value = "dark", label = L["Dark"] }, { value = "none", label = L["Off"] } } },
+		{ kind = "toggle", key = "ui.barShown", label = L["Keep the bar shown"], child = true, disabled = function() return ns.Get("ui.style") ~= "transparent" end,
+			help = L["With Transparent, the tabs and the step bar stay on screen instead of only under the cursor."],
+			search = "transparent, bar, header, readable, always, show" },
 		{ kind = "slider", key = "ui.scale", label = L["Window scale"], min = 0.6, max = 1.6, step = 0.05, format = percent, search = "size, bigger, smaller, zoom" },
 		{ kind = "slider", key = "ui.width", label = L["Width"], min = 260, max = 560, step = 10, format = "%d", search = "wide, wider, size" },
 		{ kind = "slider", key = "ui.opacity", label = L["Window opacity"], min = 0.3, max = 1, step = 0.05, format = percent, search = "transparency, alpha, see through",
@@ -400,22 +508,12 @@ for _, list in ipairs({
 	declare(DISCOVERY, "discovery", "search", 50, L["Lookup, the dungeon journal and rares: finding things in the world."], {
 		{ L["Lookup"], { L["How to get anything"] } },
 		{ L["Dungeons"], { ENCOUNTER_JOURNAL, L["Dungeons in leveling guides"] } },
-		{ L["Characters"], { L["Characters"] } },
-	}),
-	declare(QOL, "qualityoflife", "qol-toggles", 60, L["Small conveniences: questing, travel, invitations, merchants, bags, trackers and the map."], {
-		-- Conveniences that also live on their home pages (Questing, Guide, Map): players look for them here (Fitz, 2026-11-05).
-		{ L["Quests"], { L["Action buttons"] } },
-		{ L["Travel"], { L["Flight masters"], L["Hearthstone"], L["Along the route"], L["Nearby services"], L["Death"] } },
-		{ L["Vendors"], { L["Trainers"] } },
-		{ L["Trackers"], { L["Experience"] } },
-		{ L["Map"], { L["Minimap"] } },
 	}),
 }) do
 	for _, spec in ipairs(list) do BUILTIN[#BUILTIN + 1] = spec end
 end
 
-for _, spec in ipairs(BUILTIN) do add(spec, true) end
-add({ page = QOL, tab = L["Vendors"], section = L["Trainers"], controls = { trainReminder() } }, true)
+for _, spec in ipairs(BUILTIN) do addSlim(spec, true) end
 
 -- Two widgets side by side in the body's columns at y, sized by
 -- layout(widget, width) -> height and both as tall as the taller. -> height
@@ -567,8 +665,8 @@ local ALIASES = {
 	automation = { "guide", L["Automation"] }, behavior = { "guide", L["Automation"] }, behaviour = { "guide", L["Automation"] },
 	quests = { "questing", L["Quests"] }, gear = { "questing", L["Rewards & gear"] },
 	lookup = { "discovery", L["Lookup"] }, dungeons = { "discovery", L["Dungeons"] },
-	characters = { "discovery", L["Characters"] }, alts = { "discovery", L["Characters"] },
-	look = { "appearance" }, qol = { "qualityoflife" },
+	look = { "guide", L["Window"] }, appearance = { "guide", L["Window"] }, map = { "guide", L["Map"] },
+	qualityoflife = { "guide", L["Automation"] }, qol = { "guide", L["Automation"] },
 }
 
 ---------------------------------------------------------------------------
@@ -1404,6 +1502,25 @@ function O.Controls(key, tabName)
 	return out
 end
 
+-- Every shown control, page > tab > section, for tests and tooling.
+function O.Layout()
+	local out = {}
+	for _, p in ipairs(pageList) do
+		if pageShown(p) then
+			for _, t in ipairs(shownTabs(p)) do
+				for _, sec in ipairs(t.sections) do
+					local keys = {}
+					for _, c in ipairs(sec.controls) do
+						if available(c) then keys[#keys + 1] = c.key or (c.kind .. ":" .. tostring(c.label)) end
+					end
+					if #keys > 0 then out[#out + 1] = { page = p.key, tab = t.name, section = sec.name, keys = keys } end
+				end
+			end
+		end
+	end
+	return out
+end
+
 -- The pages and tabs the sidebar and tab row show, in order.
 function O.Pages()
 	local out = {}
@@ -1418,7 +1535,7 @@ function O.Pages()
 end
 
 -- Every module's registrations, now and later.
-W.OnOptionsRegistered(function(spec) add(spec, false) end)
+W.OnOptionsRegistered(function(spec) addSlim(spec, false) end)
 
 ---------------------------------------------------------------------------
 -- Blizzard Settings: a "Polestar" entry under AddOns that opens our window.

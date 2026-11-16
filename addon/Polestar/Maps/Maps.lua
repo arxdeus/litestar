@@ -99,5 +99,4 @@ local function minimapButton()
 		help = L["A Polestar button on the edge of the minimap. Click to hide or show Polestar, right-click for a menu, drag to move it."] }
 end
 
-register({ page = MAP, tab = L["Guide & quests"], section = L["Guide"], controls = { minimapButton() } })
 register({ page = L["Quality of Life"], tab = L["Map"], section = L["Minimap"], controls = { minimapButton() } })

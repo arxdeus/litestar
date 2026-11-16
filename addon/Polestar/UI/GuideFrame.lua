@@ -134,7 +134,7 @@ local chrome = {} -- frames that hide in transparent mode until hovered
 
 local function Engine() return ns.Engine end
 local function compact() return ns.Get("ui.compact") and true or false end
-local function transparent() return false end -- slim build: the standard window only
+local function transparent() return ns.Get("ui.style") == "transparent" end
 
 -- A string that follows the window's style (outlined when transparent).
 local function T(parent, role, color, layer)
@@ -4266,6 +4266,7 @@ local function openMenu(button)
 	end
 	for _, it in ipairs({
 		{ text = L["Compact mode"], icon = "compact", checked = compact(), onClick = function() ns.Set("ui.compact", not compact()) end },
+		{ text = L["Transparent"], icon = "layers", checked = clear, onClick = function() ns.Set("ui.style", clear and "standard" or "transparent") end },
 		{ text = L["Lock window"], icon = "lock", checked = ns.Get("ui.locked") and true or false, onClick = function() ns.Set("ui.locked", not ns.Get("ui.locked")) end },
 		{ separator = true },
 		{ text = L["Reset guide progress"], icon = "reset", confirm = true, disabled = not hasGuide, tip = L["Clears your manual check-offs and skipped steps in this guide from your last quest progress on. The guide stays where your quests put you."],

@@ -362,7 +362,7 @@ local FIXED = {
 	["ui.matchFont"] = false, ["ui.border"] = true, ["ui.borderColor"] = false, ["ui.borderAccent"] = false,
 	["ui.borderSize"] = 1, ["ui.band"] = false, ["ui.shadow"] = true,
 	["nav.arrowColor"] = false, ["nav.arrowNearColor"] = false,
-	["ui.style"] = "standard", ["ui.backing"] = "dark", ["ui.barShown"] = true, ["ui.textSize"] = 1, ["ui.bgOpacity"] = 0.94,
+	["ui.textSize"] = 1, ["ui.bgOpacity"] = 0.94,
 }
 local function get(path)
 	local v = FIXED[path]
