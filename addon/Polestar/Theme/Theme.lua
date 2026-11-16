@@ -393,7 +393,7 @@ end
 -- settings below are fixed; anything a saved file still holds for them is
 -- ignored.
 local FIXED = {
-	["ui.skin"] = "blizzard", ["ui.scheme"] = "dusk", ["ui.font"] = "game", ["ui.accent"] = false,
+	["ui.skin"] = "blizzard", ["ui.scheme"] = "dusk", ["ui.font"] = "skin", ["ui.accent"] = false,
 	["ui.classAccent"] = false, ["ui.bgColor"] = false, ["ui.brightness"] = 0, ["ui.matchAccent"] = false,
 	["ui.matchFont"] = false, ["ui.border"] = true, ["ui.borderColor"] = false, ["ui.borderAccent"] = false,
 	["ui.borderSize"] = 1, ["ui.band"] = false, ["ui.shadow"] = true,
