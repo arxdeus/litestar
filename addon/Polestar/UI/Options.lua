@@ -147,8 +147,6 @@ local GUIDE, LOOK, MAP, QUESTING, DISCOVERY, QOL, REC, ABOUT =
 
 local function resetPositions()
 	ns.Set("ui.pos", nil)
-	-- The party panel re-places itself on the change (UI/PartyPanel.lua).
-	ns.Set("party.panelPos", nil)
 	if ns.Nav and ns.Nav.ResetArrowPosition then ns.Nav.ResetArrowPosition() end
 	if win then
 		win:ClearAllPoints()
@@ -312,8 +310,6 @@ local BUILTIN = {
 			choices = ns.RouteLines and ns.RouteLines.STYLE_CHOICES or {},
 			needs = function() return ns.RouteLines end,
 			child = true, disabled = function() return not ns.Get("nav.routeLines") end }),
-		{ kind = "toggle", key = "nav.shareTransit", label = L["Share boat times"], help = L["Riding a boat, zeppelin, tram or lift times it; your guild and group get those times and you get theirs, so the arrow can say when the next one leaves."],
-			search = "boat, zeppelin, tram, ship, transport, schedule" },
 	} },
 	{ page = GUIDE, tab = L["Arrow & routes"], section = L["Other waypoints"], controls = {
 		H({ kind = "toggle", key = "nav.blizzardWaypoint", label = L["Blizzard waypoint"], help = L["Also set the game's own map pin and tracking."], search = "map pin, waypoint, user waypoint, supertrack" }),

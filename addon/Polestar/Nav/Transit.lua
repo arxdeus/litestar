@@ -646,9 +646,9 @@ local ACCEPTED = { GUILD = true, PARTY = true, RAID = true }
 local lastReply, pendingReply = {}, {}
 local pendingRemote, remoteTimer, lastRemote = {}, false, nil
 
-local function sharing()
-	return ns.Get("nav.shareTransit") and C_ChatInfo and C_ChatInfo.SendAddonMessage and true or false
-end
+-- Slim build: no addon messages to the guild or group; boat times come from
+-- the player's own rides only.
+local function sharing() return false end
 
 local function inPvp()
 	if not IsInInstance then return false end
@@ -876,7 +876,6 @@ ns.OnLogin(function()
 		if not fresh(anchor, now) or not routes[id] then s[id] = nil end
 	end
 	lastTeleports = teleportState()
-	if C_ChatInfo and C_ChatInfo.RegisterAddonMessagePrefix then pcall(C_ChatInfo.RegisterAddonMessagePrefix, PREFIX) end
 	if C_Timer and C_Timer.NewTicker and not ticker then
 		ticker = ns.NewTicker(SAMPLE_EVERY, function()
 			sample()
@@ -884,15 +883,8 @@ ns.OnLogin(function()
 			if tick % 5 == 0 then teleportsChanged() end
 		end)
 	end
-	-- Ask the guild for its sightings once the chat channels are up.
-	if C_Timer and C_Timer.After then
-		ns.After(15, function()
-			if sharing() and IsInGuild and IsInGuild() then send("Q", {}, "GUILD") end
-		end)
-	end
 end)
 
-ns.RegisterEvent("CHAT_MSG_ADDON", onAddonMessage)
 -- A /reload or logout on board would otherwise lose the ride so far.
 ns.RegisterEvent("PLAYER_LEAVING_WORLD", function() if ride then record() end end)
 ns.RegisterEvent("SPELLS_CHANGED", teleportsChanged)

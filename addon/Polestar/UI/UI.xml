@@ -8,8 +8,6 @@
 	<Script file="Launcher.lua"/>
 	<Script file="GameMenu.lua"/>
 	<Script file="WhileHere.lua"/>
-	<Script file="PartyPanel.lua"/>
-	<Script file="PartyLoot.lua"/>
 	<Script file="ClassRewards.lua"/>
 	<Script file="ClassCard.lua"/>
 	<Script file="ClassToast.lua"/>
