@@ -301,15 +301,6 @@ local BUILTIN = {
 			child = true, disabled = function() return not ns.Get("nav.travel") end }),
 		H({ kind = "toggle", key = "nav.navRouting", label = L["Walk real paths"], help = L["The arrow follows paths on the ground around cliffs, water and walls, on Polestar's walking maps, with Shortest Path Forever's router by Cillian Berragan. Off: it points straight at each stop."],
 			search = "pathfinding, pathing, router, walking, avoid cliffs, mountains, fps, frame rate, performance, lag, stutter, cpu, slow" }),
-		H({ kind = "toggle", key = "nav.routeLines", label = L["Route lines"], help = L["The way to the goal on the world map and the minimap: a line or dots where you walk, lines where you fly, sail or ride, the legs after this one fainter. Drawn as Shortest Path Forever by Cillian Berragan draws them."],
-			search = "path line, route on map, sparkles, dots",
-			gear = { tip = L["Line style"], onClick = function() if UI.ShowLineStyle then UI.ShowLineStyle() end end } }),
-		H({ kind = "dropdown", key = "nav.lineStyle", label = L["Line style"],
-			help = L["How the route lines are drawn: one solid line, Polestar's dots, or sparkles that drift along the way to the goal (dots while Reduce motion is on)."],
-			search = "route style, solid line, path line, dots, sparkles, breadcrumbs",
-			choices = ns.RouteLines and ns.RouteLines.STYLE_CHOICES or {},
-			needs = function() return ns.RouteLines end,
-			child = true, disabled = function() return not ns.Get("nav.routeLines") end }),
 	} },
 	{ page = GUIDE, tab = L["Arrow & routes"], section = L["Other waypoints"], controls = {
 		H({ kind = "toggle", key = "nav.blizzardWaypoint", label = L["Blizzard waypoint"], help = L["Also set the game's own map pin and tracking."], search = "map pin, waypoint, user waypoint, supertrack" }),
@@ -491,30 +482,21 @@ local BUILTIN = {
 		{ kind = "toggle", key = "nav.worldPins", label = L["Guide pins on the world map"], search = "map pins, icons, markers, waypoint, world map",
 			help = L["The arrow's target, the stops of its travel route, the step's other goals, the areas their mobs and objects spawn in, and the route lines."] },
 		{ kind = "toggle", key = "nav.minimapPins", label = L["Guide pin on the minimap"], help = L["The arrow's target, the areas it spawns in, and the route line."], search = "map pins, icons, markers, waypoint, minimap" },
-		H({ kind = "toggle", key = "nav.minimapRoute", label = L["Route line on the minimap"],
-			help = L["The way to the goal on the minimap. Off keeps the guide pin there and the line on the world map. Its colour, opacity and size: the gear beside Guide > Arrow & routes > Route lines."],
-			search = "route line, path, dots, minimap, herbs, gathering, mining, clutter",
-			disabled = function() return not ns.Get("nav.minimapPins") end }),
 		{ kind = "toggle", key = "nav.upcomingPins", label = L["Numbered pins for the steps ahead"],
 			help = L["A small pin with its step number where each of the next steps takes you, fainter the further ahead. As many as Up next shows, else five."] },
 		H({ kind = "toggle", key = "nav.trailDots", label = L["Trail dots along the travel route"],
-			help = L["Moving dots from you to the target on the world map and the minimap, along the travel route, while route lines are off."],
-			disabled = function() return ns.Get("nav.routeLines") end }),
+			help = L["Moving dots from you to the target on the world map and the minimap, along the travel route, while route lines are off."] }),
 	} },
 	{ page = MAP, tab = L["Guide & quests"], section = L["Quest markers"], controls = {} },
 	{ page = MAP, tab = L["Rares & travel"], section = L["Rares and treasures"], controls = {} },
-	{ page = MAP, tab = L["Rares & travel"], section = L["Dungeons and travel"], controls = {} },
-	{ page = MAP, tab = L["Rares & travel"], section = L["NPC services"], controls = {} },
-	{ page = MAP, tab = L["Zones"], section = L["Zones"], controls = {} },
-	{ page = MAP, tab = L["Zones"], section = L["Coordinates"], controls = {} },
 }
 
 -- Pages filled by modules alone: Quests, QoL, Gear and Talents on Questing; Lookup,
 -- Dungeons, Rares and Characters on Discovery; QoL and Maps on Quality of Life.
 for _, list in ipairs({
 	declare(QUESTING, "questing", "icon-accept", 40, L["Quest information, rewards and gear advice, and the quest buttons."], {
-		{ L["Quests"], { L["Quest database"], L["Tooltips and quest log"], L["Faster questing"] } },
-		{ L["Rewards & gear"], { L["Quest rewards"], L["Loot and merchants"], L["Gear advice"], L["Comparison"] } },
+		{ L["Quests"], { L["Quest database"], L["Tooltips and quest log"] } },
+		{ L["Rewards & gear"], { L["Quest rewards"], L["Gear advice"], L["Comparison"] } },
 		-- Talents: { L["Talents"], { L["Talent plan"] } } here once the plans are back (Talents.lua, T.SOON).
 		{ L["Buttons"], { L["Action buttons"] } },
 	}),
@@ -526,12 +508,11 @@ for _, list in ipairs({
 	}),
 	declare(QOL, "qualityoflife", "qol-toggles", 60, L["Small conveniences: questing, travel, invitations, merchants, bags, trackers and the map."], {
 		-- Conveniences that also live on their home pages (Questing, Guide, Map): players look for them here (Fitz, 2026-11-05).
-		{ L["Quests"], { L["Faster questing"], L["Quest rewards"], L["Action buttons"], L["Tooltips and quest log"] } },
-		{ L["Travel"], { L["Flight masters"], L["Hearthstone"], L["Flight timer"], L["Along the route"], L["Nearby services"], L["Death"] } },
-		{ L["Social"], { L["Requests"], L["Blocking"] } },
-		{ L["Vendors"], { L["Merchants"], L["Restock"], L["Bags"], L["Trainers"] } },
-		{ L["Trackers"], { L["Experience"], L["Instances"], L["Instance limits"] } },
-		{ L["Map"], { L["Minimap"], L["Coordinates"] } },
+		{ L["Quests"], { L["Action buttons"] } },
+		{ L["Travel"], { L["Flight masters"], L["Hearthstone"], L["Along the route"], L["Nearby services"], L["Death"] } },
+		{ L["Vendors"], { L["Trainers"] } },
+		{ L["Trackers"], { L["Experience"] } },
+		{ L["Map"], { L["Minimap"] } },
 	}),
 }) do
 	for _, spec in ipairs(list) do BUILTIN[#BUILTIN + 1] = spec end

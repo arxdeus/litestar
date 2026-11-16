@@ -1,7 +1,6 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
 	<Script file="UI.lua"/>
 	<Script file="ZoneArt.lua"/>
-	<Script file="ZoneArtOverlays.lua"/>
 	<Script file="NameTargets.lua"/>
 	<Script file="GuideFrame.lua"/>
 	<Script file="StepList.lua"/>
@@ -28,6 +27,5 @@
 	<Script file="Packs.lua"/>
 	<Script file="Import.lua"/>
 	<Script file="Options.lua"/>
-	<Script file="LineStyle.lua"/>
 	<Script file="QuestieTurnIns.lua"/>
 </Ui>
