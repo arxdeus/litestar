@@ -9,7 +9,7 @@ use forge_guide::data::Data;
 use forge_guide::diag::{Diag, Diagnostics};
 use forge_guide::js::V;
 use forge_guide::project::{build_pack, find_guide_files, find_pack_dir, load_project_data, no_reference_data, read_sources, same_path, BuildOpts, Context, FileContent};
-use forge_release::addons::{codex_data_warning, codex_refusal, guide_notice_refusal, notice_refusal, release_addons, retired_addons, toc_version, CODEX, RECORDER};
+use forge_release::addons::{codex_data_warning, codex_refusal, guide_notice_refusal, notice_refusal, release_addons, retired_addons, toc_version, CODEX};
 use forge_release::pack::{archive_entries, pack_entries, readme, sha256_hex};
 use forge_release::zip::{write_zip, Entry};
 use forge_release::{plural, shown};
@@ -164,8 +164,7 @@ fn pack_release(args: &[String], root: &Path, data_dir: &Path) -> Result<(), sup
 	}
 	let license_file = root.join("LICENSE");
 	let license = std::fs::read(&license_file).map_err(io(&license_file))?;
-	let recorder = vec![RECORDER.to_string()];
-	for names in [&product.names, &recorder] {
+	for names in [&product.names] {
 		// Our guide pack's TOC is generated below.
 		for n in names.iter().filter(|n| **n != folder) {
 			let toc = addons.join(n).join(format!("{n}.toc"));
@@ -216,7 +215,6 @@ fn pack_release(args: &[String], root: &Path, data_dir: &Path) -> Result<(), sup
 	let gpl = Entry::file("LICENSE", license);
 	let archives = [
 		(format!("Polestar-{version}.zip"), &product.names, vec![("Polestar", vec![gpl.clone(), Entry::file("README.txt", readme(&version, &product.names))])]),
-		(format!("Polestar_Recorder-{version}.zip"), &recorder, vec![(RECORDER, vec![gpl])]),
 	];
 	let mut sums = String::new();
 	for (file, names, extras) in &archives {
