@@ -79,7 +79,10 @@ function copyTree(from, to) {
 		if (ent.isDirectory()) {
 			copyTree(src, dst);
 		} else if (/\.(lua|xml|toc)$/i.test(ent.name)) {
-			fs.writeFileSync(dst, transformText(fs.readFileSync(src, 'utf8')));
+			// latin1 maps every byte to one char and back: the walking maps' Lua
+			// strings hold compressed binary data, which a UTF-8 round trip mangles
+			// (DecompressString errors in game). Every rule matches ASCII only.
+			fs.writeFileSync(dst, Buffer.from(transformText(fs.readFileSync(src, 'latin1')), 'latin1'));
 		} else {
 			fs.copyFileSync(src, dst);
 		}
@@ -122,7 +125,7 @@ function main() {
 			const f = path.join(d, e.name);
 			if (e.isDirectory()) walk(f);
 			else if (/\.(lua|xml|toc)$/i.test(e.name)) {
-				const lines = fs.readFileSync(f, 'utf8').split('\n');
+				const lines = fs.readFileSync(f, 'latin1').split('\n');
 				lines.forEach((l, i) => { if (/Polestar|POLESTAR/.test(l) && !/^## Notes(-ruRU)?: /.test(l)) left.push(`${path.relative(ADDONS_OUT, f)}:${i + 1}`); });
 			}
 		}

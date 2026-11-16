@@ -81,7 +81,6 @@ local function paint(t)
 end
 
 local arrows = setmetatable({}, { __mode = "k" }) -- item button -> arrow texture (the client's bags)
-local widgets = setmetatable({}, { __mode = "k" }) -- arrow textures made for Baganator
 
 ---------------------------------------------------------------------------
 -- The client's bags
@@ -173,7 +172,5 @@ ns.On("POLESTAR_HIDDEN", schedule)
 if ns.Theme and ns.Theme.OnChanged then
 	ns.Theme.OnChanged(function()
 		for _, t in pairs(arrows) do paint(t) end
-		for t in pairs(widgets) do paint(t) end
-		for _, t in pairs(marks) do paint(t) end
 	end)
 end
