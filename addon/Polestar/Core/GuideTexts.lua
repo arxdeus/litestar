@@ -49,9 +49,8 @@ ns.GuideTexts = GuideTexts
 local type, pairs, ipairs, tonumber, next = type, pairs, ipairs, tonumber, next
 local find, sub, upper, concat = string.find, string.sub, string.upper, table.concat
 
-local ENGLISH = { enUS = true, enGB = true }
 local locale = (GetLocale and GetLocale()) or "enUS"
-local english = ENGLISH[locale] or false
+local english = locale ~= "ruRU" -- only English and Russian ship
 
 GuideTexts.GUIDE_FIELDS = { "title", "why", "pitch", "folder" }
 local GUIDE_FIELDS = { "title", "why", "pitch" }

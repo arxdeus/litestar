@@ -1528,10 +1528,6 @@ local function bannerNotice()
 	if bags then return "bags", bags end
 	local wear = Q and Q.Wear and Q.Wear.Offer and Q.Wear.Offer()
 	if wear then return "wear", wear end
-	-- A newer Polestar (UI/UpdateCard.lua): last, so it waits for every other.
-	local UC = UI.UpdateCard
-	local up = UC and UC.Banner and UC.Banner()
-	if up then return "update", up end
 	return nil
 end
 GF.BannerNotice = bannerNotice
@@ -1880,11 +1876,6 @@ function GF.LayoutBanner(width)
 		local w = placeLink(banner.Jump, L["Wear it"], 0, -4)
 		placeLink(banner.Later, L["Not this one"], w + 10, -4)
 		banner.Close:Show()
-	elseif kind == "update" then
-		banner.Icon:SetTexture(Theme.Media("reset"))
-		banner.Text:SetText(UI.UpdateCard.BannerText(n))
-		placeLink(banner.Jump, n.kind == "old" and L["How to update"] or L["Update"], 0, -4)
-		banner.Close:SetShown(n.closable)
 	end
 	local h = floor(9 + banner.Text:GetStringHeight() + 4 + 18 + 9 + 0.5)
 	banner:SetHeight(h)
@@ -1957,8 +1948,6 @@ function GF.TakeBanner()
 		ns.QoL.Space.Press()
 	elseif kind == "wear" then
 		ns.QoL.Wear.Take()
-	elseif kind == "update" then
-		UI.UpdateCard.Show(true)
 	end
 	GF.Layout()
 end
@@ -2010,8 +1999,6 @@ function GF.DismissBanner(later)
 		ns.QoL.Space.Dismiss()
 	elseif kind == "wear" then
 		ns.QoL.Wear.Dismiss()
-	elseif kind == "update" then
-		UI.UpdateCard.DismissBanner()
 	elseif kind == "ended" then
 		notices.endSeen = n.guideId
 	elseif kind then
@@ -2401,10 +2388,9 @@ function GF.Layout()
 	-- The guide's title sits in the navigator only when no tab names it.
 	local steps = nav.Steps:IsShown()
 	local skipW = nav.Skip:IsShown() and nav.Skip:GetWidth() + 4 or 0
-	local reportW = nav.Report:IsShown() and nav.Report:GetWidth() or 0
 	local nearbyW = nav.Nearby:IsShown() and nav.Nearby:GetWidth() or 0
 	local lookupW = nav.Lookup:GetWidth()
-	local titleW = width - PAD - (steps and nav.Steps:GetWidth() + 12 or 0) - 24 - 8 - 8 - skipW - reportW - nearbyW - lookupW
+	local titleW = width - PAD - (steps and nav.Steps:GetWidth() + 12 or 0) - 24 - 8 - 8 - skipW - nearbyW - lookupW
 	-- At the minimum width the controls take the row; the title must not sit
 	-- behind Skip (notably in compact mode, where the tab strip is hidden).
 	nav.Title:SetShown((not showStrip or not steps) and nav.Title:GetText() ~= nil and nav.Title:GetText() ~= "" and titleW >= 40)
@@ -2415,7 +2401,7 @@ function GF.Layout()
 	-- With no guide open, only the tab just closed (its Reopen) and a newer
 	-- Polestar show.
 	local kind = bannerNotice()
-	if kind and ((state ~= "noguide" and state ~= "noguides") or kind == "closedTab" or kind == "update") then
+	if kind and ((state ~= "noguide" and state ~= "noguides") or kind == "closedTab") then
 		y = stack(banner, y, GF.LayoutBanner(width))
 		banner:Show()
 	else
@@ -2741,7 +2727,7 @@ end
 -- button is off (nav.nearbyButton).
 local function anchorSkip()
 	nav.Skip:ClearAllPoints()
-	nav.Skip:SetPoint("RIGHT", nav.Nearby:IsShown() and nav.Nearby or nav.Report, "LEFT", -2, 0)
+	nav.Skip:SetPoint("RIGHT", nav.Nearby:IsShown() and nav.Nearby or nav.Lookup, "LEFT", -2, 0)
 end
 
 local function navigatorFor(guide, index)
@@ -2763,9 +2749,8 @@ local function navigatorFor(guide, index)
 	W.SetIconState(nav.Prev, false, guide ~= nil)
 	W.SetIconState(nav.Next, false, guide ~= nil and index ~= nil)
 	GF.PaintSkip(guide ~= nil, guide ~= nil and index ~= nil)
-	nav.Report:SetShown(guide ~= nil)
 	nav.Nearby:ClearAllPoints()
-	nav.Nearby:SetPoint("RIGHT", guide and nav.Report or nav.Lookup, "LEFT", 0, 0)
+	nav.Nearby:SetPoint("RIGHT", nav.Lookup, "LEFT", 0, 0)
 	anchorSkip()
 	-- No guide: no steps to walk; the navigator names the addon instead.
 	nav.Steps:SetShown(guide ~= nil)
@@ -4133,7 +4118,7 @@ function GF.ApplySkin()
 	nav.Next:SetPoint("LEFT", nav.Steps.Count, "RIGHT", gap, 0)
 	local iw, ih, ig = Theme.Metric("guideIconBtnW", 24), Theme.Metric("guideIconBtnH", 24), Theme.Metric("guideIcon", 14)
 	-- The icon buttons right of Skip share the skin's sizes.
-	for _, key in ipairs({ "Menu", "Lookup", "Report", "Nearby" }) do
+	for _, key in ipairs({ "Menu", "Lookup", "Nearby" }) do
 		local b = rawget(nav, key)
 		if b then
 			b:SetSize(iw, ih)
@@ -4311,7 +4296,6 @@ local function openMenu(button)
 		{ text = L["Open in new tab"], icon = "plus", disabled = not (E and E.OpenTab), onClick = function() UI.ShowPicker({ newTab = true }) end },
 		-- No step on screen (a finished guide): nothing to skip, as with the navigator's Skip.
 		{ text = L["Skip this step"], icon = "skip", disabled = not (hasGuide and E.GetStepIndex and E.GetStepIndex()), onClick = function() GF.SkipStep() end },
-		{ text = L["Report a problem"], icon = "bug", onClick = function() UI.ShowReport() end },
 		{ separator = true },
 	}
 	-- Pin the shown step's quests in the log as along the way, or unpin them (#644).
@@ -4336,10 +4320,6 @@ local function openMenu(button)
 			ns.Print(L["Guide window hidden. Type /polestar to bring it back."])
 		end },
 	}) do items[#items + 1] = it end
-	-- The Recorder's window, while the Recorder addon is loaded.
-	if type(PolestarRecorder_Command) == "function" then
-		table.insert(items, 5, { text = L["Recorder window"], icon = "record", onClick = function() PolestarRecorder_Command("ui") end })
-	end
 	local reopen = GF.ReopenItem()
 	if reopen then table.insert(items, 3, reopen) end
 	W.ShowMenu(button, items)
@@ -4677,16 +4657,10 @@ local function build()
 	nav.Lookup = W.IconButton(nav, "search", 24, L["Lookup"], function() UI.ShowLookup() end)
 	nav.Lookup.psTipLines = { L["Search quests, NPCs, items, mounts and guides."] }
 	nav.Lookup:SetPoint("RIGHT", nav.Menu, "LEFT", 0, 0)
-	-- Report a problem with the step on screen (UI/Report.lua): the bug, left
-	-- of Lookup.
-	nav.Report = W.IconButton(nav, "bug", 24, L["Report a problem"], function() UI.ShowReport() end)
-	nav.Report.psTipLines = { L["Write what went wrong, copy the report and paste it on the Polestar Discord."] }
-	nav.Report:SetPoint("RIGHT", nav.Lookup, "LEFT", 0, 0)
-	nav.Report:Hide()
 	-- Nearby services: left of the bug, right of Skip.
 	nav.Nearby = W.IconButton(nav, "icon-goto", 24, L["Nearby services"], openNearby)
 	nav.Nearby.psTipLines = { L["Points the arrow at the nearest vendor, repair, inn, flight master or trainer."] }
-	nav.Nearby:SetPoint("RIGHT", nav.Report, "LEFT", 0, 0)
+	nav.Nearby:SetPoint("RIGHT", nav.Lookup, "LEFT", 0, 0)
 	nav.Nearby:SetShown(ns.Get("nav.nearbyButton") ~= false)
 	GF.nearbyButton = nav.Nearby
 	-- Skip: the 11px skip glyph and a Small label, a ghost button left of the
@@ -4745,11 +4719,11 @@ local function build()
 		scrubAt = nil
 		UI.StepList.Toggle()
 	end)
-	for _, b in ipairs({ nav.Menu, nav.Lookup, nav.Report, nav.Nearby, nav.Next, nav.Prev, nav.Skip }) do hoverable(b) end
+	for _, b in ipairs({ nav.Menu, nav.Lookup, nav.Nearby, nav.Next, nav.Prev, nav.Skip }) do hoverable(b) end
 	-- Transparent chrome: the step number fades with its chevrons (nav.Steps
 	-- holds all three) and the title with them; a lone "3 / 8" over the world
 	-- would read as a stray number. Progress stays readable in the foot.
-	for _, c in ipairs({ nav.Menu, nav.Lookup, nav.Report, nav.Nearby, nav.Skip, nav.Steps, nav.Title }) do chrome[#chrome + 1] = c end
+	for _, c in ipairs({ nav.Menu, nav.Lookup, nav.Nearby, nav.Skip, nav.Steps, nav.Title }) do chrome[#chrome + 1] = c end
 
 	-- Body
 	body = CreateFrame("Frame", nil, F)

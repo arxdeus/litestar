@@ -11,17 +11,11 @@
 	<Binding name="POLESTAR_PREV" category="Polestar" searchTags="BINDING_TAG_POLESTAR">
 		Polestar.Bindings.Prev()
 	</Binding>
-	<Binding name="POLESTAR_FOCUS" category="Polestar" searchTags="BINDING_TAG_POLESTAR">
-		Polestar.Bindings.Focus()
-	</Binding>
 	<Binding name="POLESTAR_MENU" category="Polestar" searchTags="BINDING_TAG_POLESTAR">
 		Polestar.Bindings.Menu()
 	</Binding>
 	<Binding name="POLESTAR_OPTIONS" category="Polestar" searchTags="BINDING_TAG_POLESTAR">
 		Polestar.Bindings.Options()
-	</Binding>
-	<Binding name="POLESTAR_REPORT" category="Polestar" searchTags="BINDING_TAG_POLESTAR">
-		Polestar.Bindings.Report()
 	</Binding>
 	<Binding name="POLESTAR_NEXT_WAYPOINT" category="Polestar" searchTags="BINDING_TAG_POLESTAR">
 		Polestar.Bindings.NextWaypoint()

@@ -3,7 +3,6 @@
 	<Script file="Compat.lua"/>
 	<Script file="Data.lua"/>
 	<Script file="LuaChunks.lua"/>
-	<Script file="Credits.lua"/>
 	<Script file="Names.lua"/>
 	<Script file="Hooks.lua"/>
 	<Script file="GuideTexts.lua"/>
@@ -21,5 +20,4 @@
 	<Script file="Unlocks.lua"/>
 	<Script file="Automation.lua"/>
 	<Script file="Commands.lua"/>
-	<Script file="Update.lua"/>
 </Ui>

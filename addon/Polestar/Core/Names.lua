@@ -50,9 +50,11 @@ ns.Names = Names
 
 local type, pairs, ipairs, tonumber, floor = type, pairs, ipairs, tonumber, math.floor
 
-local ENGLISH = { enUS = true, enGB = true }
+-- Only English (built in) and Russian (Polestar_ruRU) ship; any other client
+-- language plays in English.
+local SHIPPED = { ruRU = true }
 local locale = (GetLocale and GetLocale()) or "enUS"
-local localised = not ENGLISH[locale]
+local localised = SHIPPED[locale] == true
 local PACK = localised and ("Polestar_" .. locale) or nil
 
 local LuaChunks = ns.LuaChunks

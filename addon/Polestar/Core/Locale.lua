@@ -29,10 +29,7 @@ end
 
 -- The languages Polestar ships a folder for; a client in another language
 -- (itIT) has none to miss and plays in English without a word.
-local LANGUAGE = {
-	deDE = "German", esES = "Spanish (Spain)", esMX = "Spanish (Latin America)", frFR = "French", koKR = "Korean",
-	ptBR = "Portuguese (Brazil)", ruRU = "Russian", zhCN = "Simplified Chinese", zhTW = "Traditional Chinese",
-}
+local LANGUAGE = { ruRU = "Russian" }
 local language = pack and LANGUAGE[pack:match("^Polestar_(.+)$") or ""]
 
 if language then

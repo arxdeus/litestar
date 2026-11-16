@@ -2100,8 +2100,6 @@ local function build()
 		onSearch = onSearch,
 	})
 	P.frame = win
-	UI.Report.SidebarLink(win)
-	UI.Thanks.HeaderLink(win)
 	P.search = win.Search
 	P.scroll = win.Scroll
 	local main = win.Main

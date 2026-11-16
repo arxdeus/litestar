@@ -19,19 +19,11 @@ pub struct Locale {
 }
 
 /// LOCALES, in its key order.
-pub static LOCALES: [Locale; 9] = [
-	Locale { code: "deDE", language: "German", status: "reviewed", translators: &["Cortexyn"] },
-	Locale { code: "esES", language: "Spanish (Spain)", status: "reviewed", translators: &["julen92"] },
-	Locale { code: "esMX", language: "Spanish (Latin America)", status: "reviewed", translators: &["CDVolvik"] },
-	Locale { code: "frFR", language: "French", status: "reviewed", translators: &["Yendi"] },
-	Locale { code: "koKR", language: "Korean", status: "ai", translators: &[] },
-	Locale { code: "ptBR", language: "Portuguese (Brazil)", status: "ai", translators: &[] },
+pub static LOCALES: [Locale; 1] = [
 	Locale { code: "ruRU", language: "Russian", status: "ai", translators: &[] },
-	Locale { code: "zhCN", language: "Chinese (simplified)", status: "ai", translators: &["山猫"] },
-	Locale { code: "zhTW", language: "Chinese (traditional)", status: "ai", translators: &[] },
 ];
 
-pub const LOCALE_CODES: [&str; 9] = ["deDE", "esES", "esMX", "frFR", "koKR", "ptBR", "ruRU", "zhCN", "zhTW"];
+pub const LOCALE_CODES: [&str; 1] = ["ruRU"];
 
 /// `LOCALES[code]`.
 pub fn locale(code: &str) -> Option<&'static Locale> {

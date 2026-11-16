@@ -153,7 +153,7 @@ end
 
 -- Every client language's folder before 0.3.0 had two: its guide texts and
 -- its names. Polestar_<locale> holds both now.
-local LOCALES = { "deDE", "esES", "esMX", "frFR", "koKR", "ptBR", "ruRU", "zhCN", "zhTW" }
+local LOCALES = { "ruRU" }
 
 local function retiredLocales()
 	local out = {}

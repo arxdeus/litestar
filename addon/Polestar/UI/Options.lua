@@ -572,31 +572,6 @@ add({ page = L["Integrations"], section = "Spoken", controls = {
 -- Custom pages: Recorder status and About
 ---------------------------------------------------------------------------
 
--- The Recorder's state from its SavedVariables (schema 2, docs/RECORDING.md):
--- the chunks waiting for the uploader, their size, the last one it confirmed.
-local function recorderState()
-	local loaded = C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("Polestar_Recorder")
-	local db = PolestarRecorderDB
-	if not loaded then return { installed = false } end
-	local out = { installed = true, enabled = false, chunks = 0, bytes = 0, acked = 0 }
-	if type(db) == "table" then
-		out.enabled = db.enabled == true -- opt-in: off until the player starts it
-		if type(db.chunks) == "table" then
-			for _, text in pairs(db.chunks) do
-				out.chunks = out.chunks + 1
-				if type(text) == "string" then out.bytes = out.bytes + #text end
-			end
-		end
-		if type(db.acked) == "number" then out.acked = db.acked end
-	end
-	return out
-end
-O.RecorderState = recorderState
-
-local function recorderCommand(arg)
-	if PolestarRecorder_Command then PolestarRecorder_Command(arg) end
-end
-
 -- Two widgets side by side in the body's columns at y, sized by
 -- layout(widget, width) -> height and both as tall as the taller. -> height
 local function placePair(view, pair, y, cw, layout)
@@ -609,67 +584,6 @@ local function placePair(view, pair, y, cw, layout)
 	end
 	for _, w in ipairs(pair) do w:SetHeight(h) end
 	return h
-end
-
-local function buildRecorder(view)
-	local rows = {
-		status = W.InfoRow(view, L["Status"]),
-		chunks = W.InfoRow(view, L["Waiting to upload"], L["Chunks the Polestar Uploader has not sent yet."]),
-		size = W.InfoRow(view, L["Stored"]),
-		acked = W.InfoRow(view, L["Last uploaded chunk"]),
-	}
-	local header = W.SectionHeader(view)
-	W.SetSection(header, L["Recordings"])
-	local actions = W.SectionHeader(view)
-	W.SetSection(actions, L["Actions"])
-	local toggle = W.ActionTile(view, "record", L["Start recording"], L["Write quests, routes and world data for guide authors. Off until you start it."], function(self)
-		recorderCommand(self.psOn and "off" or "on")
-		view.Refresh()
-	end)
-	local status = W.ActionTile(view, "info", L["Print status"], L["Chunks waiting, the last upload and the install id, in chat."], function() recorderCommand("status") end)
-	local window = W.ActionTile(view, "record", L["Recorder window"], L["Position trails, marks and the list of spots to walk, in a small window."], function() recorderCommand("ui") end)
-	local note = W.Text(view, "note", "textDim")
-	note:SetWordWrap(true)
-	note:SetSpacing(3)
-	note:SetJustifyV("TOP")
-	view.Refresh = function()
-		local st = recorderState()
-		local cw = (win.BodyWidth - GAP) / 2
-		local y = 8
-		header:ClearAllPoints()
-		header:SetPoint("TOPLEFT", view, "TOPLEFT", SH.pad, -y)
-		header:SetWidth(win.BodyWidth)
-		y = y + 44
-		if not st.installed then
-			for _, r in pairs(rows) do r:Hide() end
-			actions:Hide(); toggle:Hide(); status:Hide(); window:Hide()
-			note:SetText(L["The Polestar Recorder addon is not loaded. Enable it in the AddOns list on the character screen to record your play for guide authoring."])
-			note:SetWidth(win.BodyWidth)
-			note:ClearAllPoints()
-			note:SetPoint("TOPLEFT", view, "TOPLEFT", SH.pad, -y - 6)
-			note:Show()
-			return y + note:GetStringHeight() + 24
-		end
-		note:Hide()
-		rows.status.Value:SetText(st.enabled and L["Recording"] or L["Off"])
-		W.Color(rows.status.Value, st.enabled and "success" or "textDim")
-		rows.chunks.Value:SetText(st.chunks)
-		rows.size.Value:SetText(string.format(L["%d KiB"], floor(st.bytes / 1024 + 0.5)))
-		rows.acked.Value:SetText(st.acked > 0 and st.acked or "\226\128\147")
-		y = y + placePair(view, { rows.status, rows.chunks }, y, cw, W.LayoutRow)
-		y = y + placePair(view, { rows.size, rows.acked }, y, cw, W.LayoutRow)
-		actions:ClearAllPoints()
-		actions:SetPoint("TOPLEFT", view, "TOPLEFT", SH.pad, -y)
-		actions:SetWidth(win.BodyWidth)
-		actions:Show()
-		y = y + 44 + 4
-		toggle.psOn = st.enabled
-		toggle.Title:SetText(st.enabled and L["Stop recording"] or L["Start recording"])
-		toggle.psTitle = toggle.Title:GetText()
-		toggle.Desc:SetText(st.enabled and L["Nothing more is written until you start it again."] or L["Write quests, routes and world data for guide authors. Off until you start it."])
-		y = y + placePair(view, { toggle, status }, y, cw, W.LayoutTile) + 8
-		return y + placePair(view, { window }, y, cw, W.LayoutTile) + 24
-	end
 end
 
 -- The About hero: the sidebar's lockup at full size. The emblem (64, its ink
@@ -707,14 +621,6 @@ local function buildAbout(view)
 	local stage = W.Chip(hero)
 	stage:SetPoint("LEFT", ver, "RIGHT", 8, 0)
 	view.Stage = stage
-	-- On a client reading an AI-made translation (ns.AITranslation), a line
-	-- under the hero says so, with the Discord invite where players help fix it.
-	local aiNote = W.Text(view, "note", "textDim")
-	aiNote:SetWordWrap(true)
-	aiNote:SetJustifyH("LEFT")
-	aiNote:SetText(L["This translation was made with AI. Help improve it on Discord."])
-	local aiLink = W.Link(view, (ns.DiscordURL:gsub("^%a+://", "")), function() UI.ShowDiscord() end)
-	view.AINote, view.AILink = aiNote, aiLink
 	local function block(title, text)
 		local h = W.SectionHeader(view)
 		W.SetSection(h, title)
@@ -751,16 +657,10 @@ local function buildAbout(view)
 	local cmdH, cmdText = block(L["Commands"], hex .. "/polestar|r   " .. L["show or hide the guide window"] .. "\n"
 		.. hex .. "/polestar guides|r   " .. L["choose a guide"] .. "\n"
 		.. hex .. "/polestar next, prev, skip|r   " .. L["move through steps"] .. "\n"
-		.. hex .. "/polestar report|r   " .. L["report a problem with a step on the Polestar Discord"] .. "\n"
 		.. hex .. "/polestar help|r   " .. L["every command"])
-	local welcome = W.Button(view, L["Show the welcome again"], function() ns.Fire("SHOW_WELCOME") end)
-	view.Welcome = welcome
-	local whatsNew = W.Button(view, L["What's new"], function() ns.Fire("SHOW_WHATSNEW") end)
-	view.WhatsNew = whatsNew
 	local credH, credText = block(L["Credits"], L["Inter typeface by The Inter Project Authors, SIL Open Font License 1.1."] .. "\n"
 		.. L["Wordmark set in Cinzel by The Cinzel Project Authors, SIL Open Font License 1.1."] .. "\n"
 		.. L["Quest and map data includes pfQuest by shagu (MIT License)."] .. "\n"
-		.. L["Discord and its logo are trademarks of Discord Inc.; the logo marks the link to the Polestar Discord."] .. "\n"
 		.. L["With EllesmereUI installed, Polestar can follow its accent, font and panel colour through its public skinning API."])
 	local maintH = W.SectionHeader(view)
 	W.SetSection(maintH, L["Maintenance"])
@@ -782,18 +682,6 @@ local function buildAbout(view)
 		hero:SetPoint("TOPLEFT", view, "TOPLEFT", SH.pad, -y)
 		hero:SetWidth(width)
 		y = y + HERO_H
-		local ai = ns.AITranslation()
-		aiNote:SetShown(ai)
-		aiLink:SetShown(ai)
-		if ai then
-			aiNote:SetWidth(width)
-			aiNote:ClearAllPoints()
-			aiNote:SetPoint("TOPLEFT", view, "TOPLEFT", SH.pad, -y)
-			y = y + aiNote:GetStringHeight() + 4
-			aiLink:ClearAllPoints()
-			aiLink:SetPoint("TOPLEFT", view, "TOPLEFT", SH.pad, -y)
-			y = y + aiLink:GetHeight() + 12
-		end
 		whyH:ClearAllPoints()
 		whyH:SetPoint("TOPLEFT", view, "TOPLEFT", SH.pad, -y)
 		whyH:SetWidth(width)
@@ -814,16 +702,6 @@ local function buildAbout(view)
 			pair[2]:ClearAllPoints()
 			pair[2]:SetPoint("TOPLEFT", view, "TOPLEFT", SH.pad, -y)
 			y = y + pair[2]:GetStringHeight() + 8
-			-- The welcome and what's new again, under the commands that
-			-- they introduce.
-			if pair[1] == cmdH then
-				y = y + 4
-				welcome:ClearAllPoints()
-				welcome:SetPoint("TOPLEFT", view, "TOPLEFT", SH.pad, -y)
-				whatsNew:ClearAllPoints()
-				whatsNew:SetPoint("LEFT", welcome, "RIGHT", 8, 0)
-				y = y + welcome:GetHeight() + 12
-			end
 		end
 		maintH:ClearAllPoints()
 		maintH:SetPoint("TOPLEFT", view, "TOPLEFT", SH.pad, -y)
@@ -835,9 +713,6 @@ end
 
 add({ page = L["Community guides"], key = "guidepacks", icon = "layers", order = 70, subtitle = L["Guides made by other players: switch them on or off, and choose where suggestions come from."],
 	custom = UI.Packs.Build, dot = UI.Packs.HasProblems }, true)
-add({ page = L["Guiding Stars"], key = "thanks", icon = "star", order = 80, subtitle = L["Celebrating the supporters, contributors and bug reporters behind Polestar."],
-	custom = UI.Thanks.Build }, true)
-add({ page = REC, key = "recorder", icon = "record", order = 90, subtitle = L["The data recorder for guide authors."], custom = buildRecorder }, true)
 add({ page = ABOUT, key = "about", icon = "info", order = 100, subtitle = L["Why Polestar exists, its commands and its credits."], custom = buildAbout }, true)
 
 -- Page keys from before the pages were regrouped (and older section names)
@@ -1742,8 +1617,6 @@ local function build()
 		end,
 	})
 	O.frame = win
-	UI.Report.SidebarLink(win)
-	UI.Thanks.HeaderLink(win)
 	-- A gamepad moves through the page (UI/Gamepad.lua); LB / RB step the tabs.
 	if ns.Gamepad and ns.Gamepad.Register then
 		ns.Gamepad.Register(win, {
