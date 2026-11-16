@@ -104,7 +104,7 @@ QoL.Buttons = Buttons
 -- above the item), so nothing moves for a player who never dragged them.
 local DEFAULT_POS = { "CENTER", "CENTER", 260, -140 }
 local GAP = 44
-local SLOT = { PolestarHearthButton = 1, PolestarQuestItemButton = 0, PolestarTargetButton = -1, PolestarRareButton = -2 }
+local SLOT = { PolestarHearthButton = 1, PolestarQuestItemButton = 0, PolestarTargetButton = -1 }
 local BAG_LIFT = 2 * GAP
 local BAG_DEFAULT_POS = { DEFAULT_POS[1], DEFAULT_POS[2], DEFAULT_POS[3], DEFAULT_POS[4] + BAG_LIFT }
 
@@ -320,7 +320,6 @@ local function placeLabel(b)
 	local a = LABEL_SIDE[ns.Get("qol.buttonTextSide")] or LABEL_SIDE.right
 	-- The rare button sits under the target button, whose name has the space
 	-- above: a rare's name goes below instead.
-	if a == LABEL_SIDE.above and b:GetName() == "PolestarRareButton" then a = LABEL_SIDE.below end
 	local to = b
 	local slot = SLOT[b:GetName()]
 	if a == LABEL_SIDE.above and set and slot then
@@ -1150,286 +1149,6 @@ function Buttons.TargetMacro(list, preferred, mark, ping)
 	return text
 end
 
--- The rare alert card's Target button (Rares/Toast.lua): the one rare, the
--- ping, and the mob's mark while "Mark what they target" is on (and allowed:
--- Buttons.MarkRight). nil for a name that cannot be a macro line or does not
--- fit.
-function Buttons.RareCardMacro(name)
-	if not Buttons.MacroSafeName(name) then return nil end
-	local text = Buttons.TargetMacro({ name }, 1, Buttons.MarkLine("mob"), Buttons.PingLine())
-	if not text or #text > MACRO_LIMIT then return nil end
-	return text
-end
-
--- list, verbs, ids, marks: the names and what Buttons.TargetNames says of
--- each (copies); namesSig: the names alone, for the chat note.
-local target = { list = {}, verbs = {}, ids = {}, marks = {}, sig = nil, namesSig = "", cycle = 1 }
-
--- The mark and ping the target button's name i (default: the one the next
--- click tries first) takes: "npc" for an NPC goal's name, else "mob".
-local function targetKind(i)
-	return NPC_VERBS[target.verbs[i or target.cycle]] and "npc" or "mob"
-end
-
--- Names seen in the world (the target, the mouseover, a nameplate) as an
--- elite, rare or boss this session, and the faces of the names seen: one
--- texture per name on the target button, SetPortraitTexture'd once, laid
--- over the icon or a small icon while that name shows (at most
--- PORTRAIT_CAP; the oldest is drawn over for a new one).
-local seenSpecial, portraits, portraitOrder = {}, {}, {}
-local ELITE_CLASS = { elite = true, rareelite = true, rare = true, worldboss = true }
-
-local function codexSpecial(id)
-	local C = ns.Codex
-	if not (id and C and C.IsLoaded and C.IsLoaded() and C.Npc) then return false end
-	local n = C.Npc(id)
-	return n ~= nil and (n.elite or n.rare or n.boss) and true or false
-end
-
--- What the button shows for a name: glyph (Media/UI), colour token, and
--- whether its face may stand in for the glyph. An NPC goal's verb in
--- success (friendly); an elite, rare or boss (the guide's data, the Codex
--- when loaded, or seen so this session) the skull in quest gold, with its
--- face; any other mob its verb in danger (hostile).
-function Buttons.TargetLook(verb, name, id, special)
-	if NPC_VERBS[verb] then return VERB_ICON[verb], "success", true end
-	if special or (name and seenSpecial[name]) or codexSpecial(id) then return "icon-elite", "quest", true end
-	return VERB_ICON[verb] or "icon-kill", "danger", false
-end
-
--- The face kept for name, or nil.
-function Buttons.Portrait(name)
-	return name and portraits[name] or nil
-end
-
-local function portraitFor(b, name)
-	local tex = portraits[name]
-	if tex then return tex end
-	if #portraitOrder >= PORTRAIT_CAP then
-		local old = table.remove(portraitOrder, 1)
-		tex = portraits[old]
-		portraits[old] = nil
-	else
-		tex = b:CreateTexture(nil, "ARTWORK", nil, 1)
-	end
-	tex:Hide()
-	portraits[name] = tex
-	portraitOrder[#portraitOrder + 1] = name
-	return tex
-end
-
--- Repaint the target button from what its macro does now (b.aList at
--- b.aCycle): plain textures and text, so at any time, in combat too.
--- Without qol.targetPlate: the crosshair and the name in textDim.
-local function paintTarget(b)
-	local list, cycle = b.aList, b.aCycle or 1
-	local n = list and #list or 0
-	local name = list and list[cycle]
-	b.Label:SetText(name or "")
-	for _, tex in pairs(portraits) do tex:Hide() end
-	local shown = 0
-	local T = Theme()
-	if not (name and QoL.On("targetPlate")) then
-		b.Icon:SetTexture(media("qol-target"))
-		color(b.Icon, "danger")
-		b.Icon:Show()
-		b.Badge:Hide()
-		font(b.Label, "small")
-		color(b.Label, "textDim")
-		if T and T.SetOutline then T.SetOutline(b.Label, false) end
-	else
-		local glyph, tone, face = Buttons.TargetLook(b.aVerbs[cycle], name, b.aIds[cycle], b.aMarks[cycle])
-		local tex = face and portraits[name]
-		if tex then
-			tex:ClearAllPoints()
-			tex:SetAllPoints(b.Icon)
-			tex:Show()
-			b.Icon:Hide()
-			b.Badge:SetTexture(media(glyph))
-			color(b.Badge, tone)
-			b.Badge:Show()
-		else
-			b.Icon:SetTexture(media(glyph))
-			color(b.Icon, tone)
-			b.Icon:Show()
-			b.Badge:Hide()
-		end
-		-- On the game world: the label size, outlined like the transparent window.
-		font(b.Label, "label")
-		color(b.Label, tone)
-		if T and T.SetOutline then T.SetOutline(b.Label, true) end
-		for k = 1, math.min(n - 1, #b.Minis) do
-			local j = (cycle - 1 + k) % n + 1
-			local m = b.Minis[k]
-			local g2, t2, face2 = Buttons.TargetLook(b.aVerbs[j], list[j], b.aIds[j], b.aMarks[j])
-			local tex2 = face2 and portraits[list[j]]
-			m:SetTexture(media(g2))
-			color(m, t2)
-			if tex2 then
-				tex2:ClearAllPoints()
-				tex2:SetAllPoints(m)
-				tex2:Show()
-				m:Hide()
-			else
-				m:Show()
-			end
-			shown = k
-		end
-	end
-	for k = shown + 1, #b.Minis do b.Minis[k]:Hide() end
-	b.miniCount = shown
-	placeLabel(b)
-end
-
-local function applyTarget(b)
-	QoL.Secure("target", function()
-		local list = target.list
-		-- A mob is pinged for the group; an NPC goal's NPC stays where it is.
-		local kind = targetKind()
-		local text = Buttons.TargetMacro(list, target.cycle, Buttons.MarkLine(kind), kind == "mob" and Buttons.QuestPingLine() or nil)
-		b:SetAttribute("type", text and "macro" or nil)
-		b:SetAttribute("macrotext", text)
-		b.applied = list[target.cycle]
-		b.aList, b.aVerbs, b.aIds, b.aMarks, b.aCycle = list, target.verbs, target.ids, target.marks, target.cycle
-		paintTarget(b)
-		if text then b:Show() else b:Hide() end
-	end)
-end
-
--- A unit in the world (the target, the mouseover, a nameplate) named like
--- one of the target button's names (the new ones, or the ones it shows
--- while combat holds its macro): its classification marks an elite, rare
--- or boss, and its face is kept for that name. A secret value (Forever
--- hides units in combat) reads as unknown and is passed over.
-local function listed(list, name)
-	for i = 1, list and #list or 0 do
-		if list[i] == name then return true end
-	end
-	return false
-end
-
-local function seeUnit(unit)
-	local b = Buttons.target
-	if not (b and (target.list[1] or (b.aList and b.aList[1])) and QoL.On("targetPlate")) then return end
-	local C = ns.Compat
-	if not C.Readable(UnitExists and UnitExists(unit)) or C.Readable(UnitIsPlayer and UnitIsPlayer(unit)) ~= false then return end
-	local name = C.Readable(UnitName and UnitName(unit))
-	if not name or not (listed(target.list, name) or listed(b.aList, name)) then return end
-	local changed = false
-	local class = UnitClassification and C.Readable(UnitClassification(unit))
-	if class and ELITE_CLASS[class] and not seenSpecial[name] then
-		seenSpecial[name], changed = true, true
-	end
-	if not portraits[name] and SetPortraitTexture then
-		SetPortraitTexture(portraitFor(b, name), unit)
-		changed = true
-	end
-	if changed then paintTarget(b) end
-end
-Buttons.SeeUnit = seeUnit
-
--- The units there are now: a new list's names may already be in sight.
-local function seeAll()
-	seeUnit("target")
-	seeUnit("mouseover")
-	local NP = C_NamePlate
-	local plates = NP and NP.GetNamePlates and NP.GetNamePlates()
-	for i = 1, plates and #plates or 0 do
-		local unit = plates[i].namePlateUnitToken or (plates[i].UnitFrame and plates[i].UnitFrame.unit)
-		if type(unit) == "string" then seeUnit(unit) end
-	end
-end
-
-ns.RegisterEvent("PLAYER_TARGET_CHANGED", function() seeUnit("target") end)
-ns.RegisterEvent("UPDATE_MOUSEOVER_UNIT", function() seeUnit("mouseover") end)
-ns.RegisterEvent("NAME_PLATE_UNIT_ADDED", function(_, unit) if type(unit) == "string" then seeUnit(unit) end end)
-
-local function targetTooltip(b, tip)
-	tip:SetText(L["Target"])
-	local T = Theme()
-	local plate = QoL.On("targetPlate")
-	for i = 1, #target.list do
-		local r, g, bl = 1, 1, 1
-		if plate and T and T.Color then
-			local _, tone = Buttons.TargetLook(target.verbs[i], target.list[i], target.ids[i], target.marks[i])
-			r, g, bl = T.Color(tone)
-		end
-		tip:AddLine(target.list[i], r, g, bl)
-	end
-	if QoL.On("markTarget") and target.list[1] then
-		local right, icon = Buttons.MarkRight(), markSetting(targetKind())
-		icon = icon == "cycle" and L["a new icon each press"]
-			or ("|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_" .. icon .. ":0|t " .. (_G["RAID_TARGET_" .. icon] or icon))
-		if right == "set" then
-			tip:AddLine(string.format(L["Marks it with %s."], icon), 0.6, 0.6, 0.6, true)
-		elseif right == "free" then
-			tip:AddLine(string.format(L["Marks it with %s if it has no icon yet: you don't lead the party."], icon), 0.6, 0.6, 0.6, true)
-		else
-			tip:AddLine(L["Marks nothing: in a raid only the leader and assistants set icons."], 0.6, 0.6, 0.6, true)
-		end
-	end
-	tip:AddLine(ns.Get("ui.lockHud") and L["Click again for the next name. Shift-drag to move."]
-		or L["Click again for the next name. Drag to move."], 0.6, 0.6, 0.6)
-end
-
----------------------------------------------------------------------------
--- Rare button
----------------------------------------------------------------------------
-
-local rare = { list = {}, sig = nil, cycle = 1 }
-
-local function isFounder(name)
-	local R = ns.Rares
-	return R and R.IsFounder and R.IsFounder(name) or false
-end
-
--- The founder's macro: out of combat from nothing, his full name (as
--- Forever's own unit menu targets a surnamed player), then his first name
--- alone while nothing is targeted (Forever's menu falls back to it when the
--- client's regional unique names are off), then a wave: at him, or a plain
--- wave when neither matched. One click, never automatic.
-function Buttons.FounderMacro(name)
-	if not Buttons.MacroSafeName(name) then return nil end
-	local lines = { "/cleartarget [nocombat]", "/targetexact " .. name }
-	local first = name:match("^(%S+)%s")
-	if first then lines[#lines + 1] = "/targetexact [noexists] " .. first end
-	lines[#lines + 1] = "/wave"
-	return concat(lines, "\n")
-end
-
--- The macro for the name in front: the founder's, else the rares' from it
--- (the founder left out of their chain).
-local function rareMacro(list, cycle)
-	local front = list[cycle]
-	if isFounder(front) then return Buttons.FounderMacro(front) end
-	local rares, preferred = {}, 1
-	for i = 1, #list do
-		if not isFounder(list[i]) then
-			rares[#rares + 1] = list[i]
-			if i == cycle then preferred = #rares end
-		end
-	end
-	return Buttons.TargetMacro(rares, preferred, nil, Buttons.PingLine())
-end
-
-local function applyRare(b)
-	QoL.Secure("rare", function()
-		local list = rare.list
-		local text = rareMacro(list, rare.cycle)
-		b:SetAttribute("type", text and "macro" or nil)
-		b:SetAttribute("macrotext", text)
-		b.applied = list[rare.cycle]
-		b.Label:SetText(b.applied or "")
-		if text then b:Show() else b:Hide() end
-	end)
-end
-
-local function rareTooltip(b, tip)
-	tip:SetText(isFounder(b.applied) and L["Target and wave"] or L["Target rare"])
-	for i = 1, #rare.list do tip:AddLine(rare.list[i], 1, 1, 1) end
-	tip:AddLine(ns.Get("ui.lockHud") and L["Click again for the next name. Shift-drag to move."]
-		or L["Click again for the next name. Drag to move."], 0.6, 0.6, 0.6)
-end
 
 ---------------------------------------------------------------------------
 -- Bag button (QoL/Space.lua)
@@ -1616,7 +1335,7 @@ end
 -- Wiring
 ---------------------------------------------------------------------------
 
-local itemButton, hearthButton, targetButton, rareButton, stepButton, bagButton
+local itemButton, hearthButton, targetButton, stepButton, bagButton
 
 ---------------------------------------------------------------------------
 -- The step key's interact stage (qol.stepInteract, off by default)
@@ -1764,21 +1483,6 @@ local function refresh()
 		seeAll()
 	end
 
-	-- Not tied to the step: a rare can turn up on any of them.
-	local R = ns.Rares
-	local rares = QoL.On("rareButton") and guideShown and R and R.Nearby and R.Nearby() or {}
-	local raresSig = concat(rares, "\n")
-	if raresSig ~= rare.sig then
-		rare.sig = raresSig
-		local copy = {}
-		for i = 1, #rares do
-			if Buttons.MacroSafeName(rares[i]) then copy[#copy + 1] = rares[i] end
-		end
-		rare.list = copy
-		rare.cycle = 1
-		applyRare(rareButton)
-	end
-
 	local kind, value, npc = nil, nil, nil
 	if view then kind, value, npc = Buttons.StepAction(view, raw) end
 	local stepSig = mark .. (kind == "target" and ("target\n" .. tostring(npc) .. "\n" .. concat(value, "\n")) or (tostring(kind) .. "\n" .. tostring(value)))
@@ -1860,18 +1564,6 @@ local function create()
 		local marked = Buttons.AdvanceMark(kind)
 		if n > 1 and not marked then applyTarget(targetButton) end
 	end)
-	rareButton = newButton("PolestarRareButton", rareTooltip)
-	rareButton.Icon:SetTexture(media("qol-target"))
-	rareButton.Icon:SetTexCoord(0, 1, 0, 1)
-	color(rareButton.Icon, "quest")
-	rareButton:HookScript("PostClick", function(self, _, down)
-		if down or self.dragging then return end
-		local n = #rare.list
-		if n > 1 then
-			rare.cycle = rare.cycle % n + 1
-			applyRare(rareButton)
-		end
-	end)
 	bagButton = newButton("PolestarBagButton", bagTooltip)
 	bagButton:HookScript("PostClick", function(self, _, down)
 		if down or self.dragging then return end
@@ -1906,8 +1598,8 @@ local function create()
 		local marked = Buttons.AdvanceMark(kind)
 		if names and not marked then applyStep(self) end
 	end)
-	Buttons.item, Buttons.hearth, Buttons.target, Buttons.rare, Buttons.step, Buttons.bag = itemButton, hearthButton, targetButton, rareButton, stepButton, bagButton
-	set = { bagButton, hearthButton, itemButton, targetButton, rareButton }
+	Buttons.item, Buttons.hearth, Buttons.target, Buttons.step, Buttons.bag = itemButton, hearthButton, targetButton, stepButton, bagButton
+	set = { bagButton, hearthButton, itemButton, targetButton }
 	-- Bindable from the game's Quick Keybind Mode, shown there while hidden
 	-- (the step key has no button on screen: Options > Keybindings binds it).
 	local QB = QoL.QuickBind
@@ -1916,7 +1608,6 @@ local function create()
 	QB.Add(hearthButton, { force = true, enabled = function() return QoL.On("hearthButton") end,
 		icon = function() return Client.ItemIcon(Client.HEARTHSTONE) or media("icon-hearth") end })
 	QB.Add(targetButton, { force = true, enabled = function() return QoL.On("targetButton") end })
-	QB.Add(rareButton, { force = true, enabled = function() return QoL.On("rareButton") end })
 	QB.Add(bagButton, { force = true, enabled = function() return QoL.On("bagSpace") end,
 		wanted = function(b) return b.junk ~= nil end, icon = useIcon })
 	-- An Above name moves when a button over it comes or goes.
@@ -1954,10 +1645,8 @@ ns.RegisterEvent("UPDATE_BINDINGS", function()
 	refreshHotkey(itemButton)
 	refreshHotkey(hearthButton)
 	refreshHotkey(targetButton)
-	refreshHotkey(rareButton)
 	refreshHotkey(bagButton)
 end)
-ns.On("RARE_NEARBY", refreshSoon)
 ns.On("FLIGHT_MARK_CHANGED", refreshSoon)
 ns.On("QUESTDB_LOADED", refreshSoon)
 ns.On("NAME_LEARNED", refreshSoon)

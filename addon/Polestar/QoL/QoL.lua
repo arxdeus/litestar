@@ -35,7 +35,6 @@ local defaults = {
 	targetPlate = true,      -- ... its icon shows the action, its name in the target's colour, the next names as small icons
 	targetAnnounce = false,  -- ... a chat line when its names change
 	guideNameTarget = false, -- opt in: extend navigation clicks to targeting, with shared marking settings
-	rareButton = true,       -- target button for a rare the addon spotted
 	hearthButton = true,     -- Hearthstone button while a hearth goal is active
 	markTarget = false,      -- raid icon on what the target button, step key and objective clicks target
 	pingTarget = false,      -- /ping the mob the target button and step key target (QoL/Buttons.lua)

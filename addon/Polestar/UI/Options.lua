@@ -396,7 +396,6 @@ local BUILTIN = {
 			help = L["Moving dots from you to the target on the world map and the minimap, along the travel route, while route lines are off."] }),
 	} },
 	{ page = MAP, tab = L["Guide & quests"], section = L["Quest markers"], controls = {} },
-	{ page = MAP, tab = L["Rares & travel"], section = L["Rares and treasures"], controls = {} },
 }
 
 -- Pages filled by modules alone: Quests, QoL, Gear and Talents on Questing; Lookup,
@@ -410,7 +409,6 @@ for _, list in ipairs({
 	declare(DISCOVERY, "discovery", "search", 50, L["Lookup, the dungeon journal and rares: finding things in the world."], {
 		{ L["Lookup"], { L["How to get anything"] } },
 		{ L["Dungeons"], { ENCOUNTER_JOURNAL, L["Dungeons in leveling guides"] } },
-		{ L["Rares"], { L["When a rare shows up"], L["How rares are noticed"], L["History"] } },
 		{ L["Characters"], { L["Characters"] } },
 	}),
 	declare(QOL, "qualityoflife", "qol-toggles", 60, L["Small conveniences: questing, travel, invitations, merchants, bags, trackers and the map."], {
@@ -589,7 +587,7 @@ local ALIASES = {
 	navigation = { "guide", L["Arrow & routes"] }, nav = { "guide", L["Arrow & routes"] }, arrow = { "guide", L["Arrow & routes"] },
 	automation = { "guide", L["Automation"] }, behavior = { "guide", L["Automation"] }, behaviour = { "guide", L["Automation"] },
 	quests = { "questing", L["Quests"] }, gear = { "questing", L["Rewards & gear"] },
-	lookup = { "discovery", L["Lookup"] }, dungeons = { "discovery", L["Dungeons"] }, rares = { "discovery", L["Rares"] },
+	lookup = { "discovery", L["Lookup"] }, dungeons = { "discovery", L["Dungeons"] },
 	characters = { "discovery", L["Characters"] }, alts = { "discovery", L["Characters"] },
 	look = { "appearance" }, qol = { "qualityoflife" },
 }

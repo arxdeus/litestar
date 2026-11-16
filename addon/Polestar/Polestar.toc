@@ -26,5 +26,4 @@ QoL\QoL.xml
 Lookup\Lookup.xml
 Dungeons\Dungeons.xml
 UI\UI.xml
-Rares\Rares.xml
 Alts\Alts.xml
