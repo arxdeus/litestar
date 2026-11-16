@@ -906,5 +906,8 @@ ns.On("TOGGLE_PICKER", function()
 end)
 ns.On("TOGGLE_OPTIONS", function()
 	local O = UI.Options
-	if O and O.frame and O.frame:IsShown() then O.frame:Hide() elseif UI.ShowOptions then UI.ShowOptions() end
+	local panel = SettingsPanel
+	if O and O.frame and O.frame:IsShown() then O.frame:Hide()
+	elseif panel and panel:IsShown() and HideUIPanel and not (InCombatLockdown and InCombatLockdown()) then HideUIPanel(panel)
+	elseif UI.ShowOptions then UI.ShowOptions() end
 end)

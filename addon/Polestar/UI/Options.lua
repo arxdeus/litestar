@@ -1455,7 +1455,17 @@ local function renderRail()
 	end)
 end
 
+-- Slim build: settings live in the game's own Settings panel
+-- (UI/BlizzardSettings.lua); this window keeps the pages it cannot draw
+-- (Community guides, About), and stands in when the panel is not there.
+local WINDOW_ONLY = { guidepacks = true, about = true }
 function UI.ShowOptions(section)
+	local BS = UI.BlizzardSettings
+	if not (section and WINDOW_ONLY[section]) and BS and BS.Open and BS.Open(section) then return end
+	UI.ShowOptionsWindow(section)
+end
+
+function UI.ShowOptionsWindow(section)
 	if not win then build() end
 	local hub = UI.Picker and UI.Picker.frame
 	if hub and hub:IsShown() then
@@ -1502,6 +1512,27 @@ function O.Controls(key, tabName)
 	return out
 end
 
+-- The sections in order with their control tables (only those available),
+-- for the game's Settings panel (UI/BlizzardSettings.lua). Pages drawn by
+-- hand (custom) are left out.
+function O.Sections()
+	local out = {}
+	for _, p in ipairs(pageList) do
+		if pageShown(p) and not p.custom then
+			for _, t in ipairs(shownTabs(p)) do
+				for _, sec in ipairs(t.sections) do
+					local list = {}
+					for _, c in ipairs(sec.controls) do
+						if available(c) then list[#list + 1] = c end
+					end
+					if #list > 0 then out[#out + 1] = { page = p.key, pageName = p.name, tab = t.name, section = sec.name, controls = list } end
+				end
+			end
+		end
+	end
+	return out
+end
+
 -- Every shown control, page > tab > section, for tests and tooling.
 function O.Layout()
 	local out = {}
@@ -1537,54 +1568,3 @@ end
 -- Every module's registrations, now and later.
 W.OnOptionsRegistered(function(spec) addSlim(spec, false) end)
 
----------------------------------------------------------------------------
--- Blizzard Settings: a "Polestar" entry under AddOns that opens our window.
----------------------------------------------------------------------------
-
-local function registerSettingsCategory()
-	if not (Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory) then return end
-	local canvas = CreateFrame("Frame")
-	canvas:Hide()
-	-- The About lockup at 48: the emblem's ink on the canvas's 16 edge, the
-	-- wordmark (1:1) and the tagline centred on it, then the pitch.
-	local emblem = W.Tex(canvas, "ARTWORK", "emblem", "accent")
-	emblem:SetSize(48, 48)
-	emblem:SetPoint("TOPLEFT", canvas, "TOPLEFT", 16 - 7, -16)
-	local word = W.Tex(canvas, "ARTWORK", "wordmark", "text")
-	word:SetSize(256, 32)
-	word:SetPoint("TOPLEFT", canvas, "TOPLEFT", 66 - 3, -14)
-	local tag = W.Text(canvas, "note", "textDim")
-	tag:SetText(L["A community project"])
-	tag:SetPoint("TOPLEFT", canvas, "TOPLEFT", 66, -48)
-	local stage = W.Chip(canvas)
-	stage:SetPoint("LEFT", tag, "RIGHT", 8, 0)
-	W.SetStageChip(stage)
-	local sub = W.Text(canvas, "note", "textDim")
-	sub:SetText(L["Leveling guides for World of Warcraft: Forever."])
-	sub:SetPoint("TOPLEFT", canvas, "TOPLEFT", 16, -80)
-	local open = W.Button(canvas, L["Open Polestar settings"], function()
-		-- Closing the game's Settings panel is protected in combat: from addon
-		-- code it would fail and blame Polestar. Leave it open then, and with
-		-- the gamepad interface, whose focus a panel closed from addon code
-		-- leaves blocked (ns.GamepadUI): B closes it.
-		local panel = SettingsPanel
-		if panel and panel.IsShown and panel:IsShown() and HideUIPanel then
-			if ns.GamepadUI() then
-				ns.Print(L["Close the game menu to see Polestar's settings."])
-			elseif InCombatLockdown and InCombatLockdown() then
-				ns.Print(L["Close the game menu to see Polestar's settings (it cannot be closed for you in combat)."])
-			else
-				HideUIPanel(panel)
-			end
-		end
-		UI.ShowOptions()
-	end, { primary = true })
-	open:SetPoint("TOPLEFT", sub, "BOTTOMLEFT", 0, -16)
-	local ok, category = pcall(Settings.RegisterCanvasLayoutCategory, canvas, "Polestar")
-	if ok and category then
-		pcall(Settings.RegisterAddOnCategory, category)
-		UI.settingsCategory = category
-	end
-end
-
-ns.OnInit(registerSettingsCategory)

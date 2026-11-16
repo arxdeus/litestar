@@ -25,4 +25,5 @@
 	<Script file="Packs.lua"/>
 	<Script file="Import.lua"/>
 	<Script file="Options.lua"/>
+	<Script file="BlizzardSettings.lua"/>
 </Ui>
