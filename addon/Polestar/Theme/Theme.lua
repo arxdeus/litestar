@@ -389,7 +389,19 @@ function Theme.IsEllesmere()
 	return S ~= nil
 end
 
+-- Slim build: one look, the game's own (Blizzard skin). The appearance
+-- settings below are fixed; anything a saved file still holds for them is
+-- ignored.
+local FIXED = {
+	["ui.skin"] = "blizzard", ["ui.scheme"] = "dusk", ["ui.font"] = "game", ["ui.accent"] = false,
+	["ui.classAccent"] = false, ["ui.bgColor"] = false, ["ui.brightness"] = 0, ["ui.matchAccent"] = false,
+	["ui.matchFont"] = false, ["ui.border"] = true, ["ui.borderColor"] = false, ["ui.borderAccent"] = false,
+	["ui.borderSize"] = 1, ["ui.band"] = false, ["ui.shadow"] = true,
+	["nav.arrowColor"] = false, ["nav.arrowNearColor"] = false,
+}
 local function get(path)
+	local v = FIXED[path]
+	if v ~= nil then return v end
 	if ns.Get then return ns.Get(path) end
 end
 
@@ -826,12 +838,6 @@ end
 -- Fonts
 ---------------------------------------------------------------------------
 
-local FACES = {
-	regular = MEDIA .. "Fonts\\Inter-Regular.ttf",
-	medium = MEDIA .. "Fonts\\Inter-Medium.ttf",
-	semibold = MEDIA .. "Fonts\\Inter-SemiBold.ttf",
-}
-
 -- The size ladder, read at arm's length over a busy game world.
 local ROLES = {
 	hero = { "semibold", 26 },     -- shell page titles
@@ -855,13 +861,7 @@ local FIRA = {
 	medium = MEDIA .. "Fonts\\FiraSans-Medium.ttf",
 	semibold = MEDIA .. "Fonts\\FiraSans-SemiBold.ttf",
 }
-local OPEN_SANS_REGULAR = MEDIA .. "Fonts\\OpenSans-Regular.ttf"
-local OPEN_SANS = {
-	regular = OPEN_SANS_REGULAR,
-	medium = OPEN_SANS_REGULAR,
-	semibold = MEDIA .. "Fonts\\OpenSans-Bold.ttf",
-}
-local FAMILIES = { opensans = OPEN_SANS, inter = FACES, fira = FIRA }
+local FAMILIES = { fira = FIRA }
 
 -- The font a skin starts with (ui.font "skin", the default): the house
 -- style and the others use the game's, Halo uses Fira Sans.
@@ -957,7 +957,7 @@ function Theme.FontSpec(role)
 	-- the Russian guide texts use; Fira Sans has both and covers Cyrillic.
 	-- Only when the skin picks the face: a font the player chose stays.
 	local f = get("ui.font")
-	if (face == "game" or face == "opensans") and locale == "ruRU" and (f == nil or f == "skin") then face = "fira" end
+	if face == "game" and locale == "ruRU" and (f == nil or f == "skin") then face = "fira" end
 	if face == "game" or CJK[locale] then
 		return gameFont(), size, ""
 	end

@@ -159,10 +159,6 @@ local function resetPositions()
 end
 O.ResetPositions = resetPositions
 
-local function borderOff() return not ns.Get("ui.border") end
--- Settings of the house style alone: every other skin brings its own grounds,
--- no starlit band and no drop shadow (Theme.lua, "Skins").
-local function houseOnly() return Theme.SkinKey() ~= "polestar" end
 local function px(v) return string.format(L["%d px"], floor(v + 0.5)) end
 -- Guidance options with no effect while Shortest Path Forever guides (Nav/Handoff.lua).
 local function H(c)
@@ -356,49 +352,10 @@ local BUILTIN = {
 	-- guide window's own look, the arrow. Every change repaints live, the
 	-- preview over Colour & type with it. The accent's sources sit together
 	-- in their own section.
-	{ page = LOOK, key = "appearance", icon = "palette", order = 20, tab = L["Colour & type"], section = L["Accent"],
-		preview = function(view) return O.LookPreview(view) end,
+	{ page = LOOK, key = "appearance", icon = "palette", order = 20, tab = L["Colour & type"], section = L["Type & motion"],
 		subtitle = L["Colours, type, window frames and the arrow. Everything repaints as you change it; right-click a setting to reset it."], controls = {
-		{ kind = "color", key = "ui.accent", label = L["Accent colour"], linked = { "ui.matchAccent", "ui.classAccent" }, search = "theme colour, highlight colour, tint",
-			help = L["Click to pick your own, right-click to go back to the scheme's."],
-			shown = function() return Theme.Accent() end,
-			source = function()
-				if Theme.FollowsClassAccent() then return (UnitClass and UnitClass("player")) or L["Class colour"] end
-				return Theme.FollowsEllesmereAccent() and "EllesmereUI" or L["Polestar gold"]
-			end },
-		{ kind = "toggle", key = "ui.classAccent", label = L["Class colour"],
-			help = L["The accent follows your class: warlock purple, shaman blue, druid orange. Picking your own accent turns this off."] },
-	} },
-	{ page = LOOK, tab = L["Colour & type"], section = L["Background"], controls = {
-		{ kind = "dropdown", key = "ui.scheme", label = L["Colour scheme"], disabled = houseOnly, search = "theme, dark mode, darker",
-			help = L["How deep the night runs. Dusk is the default, Night the darkest, Graphite a neutral grey; EllesmereUI takes its panel colour and accent."],
-			choices = function() return Theme.SchemeChoices() end },
-		{ kind = "color", key = "ui.bgColor", label = L["Background colour"], disabled = houseOnly,
-			help = L["The ground of every Polestar window. Right-click to go back to the scheme's. Text always stays legible: a colour too light for it is darkened."],
-			shown = function() return Theme.Color("bg") end,
-			source = function() return O.SchemeLabel() end },
-		{ kind = "slider", key = "ui.brightness", label = L["Brightness"], disabled = houseOnly, min = -1, max = 1, step = 0.05, format = O.Signed,
-			help = L["Lifts or lowers every background together. Right-click to reset."] },
 		{ kind = "slider", key = "ui.bgOpacity", label = L["Background opacity"], min = 0, max = 1, step = 0.05, format = percent,
 			help = L["The background opacity of every Polestar window: how much of the world shows through. Right-click to reset."] },
-	} },
-	{ page = LOOK, tab = L["Colour & type"], section = L["Type & motion"], controls = {
-		{ kind = "dropdown", key = "ui.font", label = L["Font"], search = "typeface, text, letters", help = L["The skin's font (the default: the game's own, Fira Sans in Halo), or a font of your choice."],
-			choices = function()
-				local list = { { value = "skin", label = L["The skin's font"] }, { value = "opensans", label = "Open Sans" }, { value = "game", label = L["Game font"] },
-					{ value = "inter", label = "Inter" }, { value = "fira", label = "Fira Sans" } }
-				if Theme.IsEllesmere() then list[#list + 1] = { value = "ellesmere", label = "EllesmereUI" } end
-				return list
-			end,
-			get = function() return Theme.FollowsEllesmereFont() and "ellesmere" or ns.Get("ui.font") end,
-			set = function(v)
-				if v == "ellesmere" then
-					ns.Set("ui.matchFont", true)
-					return
-				end
-				ns.Set("ui.font", v)
-				if Theme.IsEllesmere() then ns.Set("ui.matchFont", false) end
-			end },
 		{ kind = "slider", key = "ui.textSize", label = L["Text size"], min = 0.8, max = 1.4, step = 0.05, format = percent, search = "font size, bigger text, smaller text, readability",
 			help = L["The size of Polestar's text, apart from the window scale. Changes at once. Right-click to reset."] },
 		{ kind = "toggle", key = "ui.reduceMotion", label = L["Reduce motion"], help = L["No sliding or popping; fades stay short."],
@@ -406,26 +363,6 @@ local BUILTIN = {
 		{ kind = "toggle", key = "ui.classCardSound", label = L["Class quest chime"],
 			disabled = function() return not (UI.ClassCard and UI.ClassCard.GameSoundOn()) end,
 			help = L["A short chime the first time a class quest chain's card shows. Off while the game's sound effects are off."] },
-	} },
-	{ page = LOOK, tab = L["Windows"], section = L["Frame"], controls = {
-		{ kind = "dropdown", key = "ui.skin", label = L["Skin"], search = "theme, look, style, frame",
-			help = L["Polestar's own look (the default), Halo (no frame, a soft dark veil, Fira Sans), Hearth (warm game colours), or the game's own art: WoW Forever, Blizzard and Classic. Style, compact mode and the colours you pick work in each."],
-			choices = function()
-				local list = {}
-				for i, c in ipairs(Theme.SkinChoices()) do list[i] = { value = c.value, label = c.text } end
-				return list
-			end },
-		{ kind = "toggle", key = "ui.border", label = L["Window border"], help = L["The line around every Polestar window."] },
-		{ kind = "color", key = "ui.borderColor", label = L["Border colour"], linked = { "ui.borderAccent" }, disabled = borderOff, child = true,
-			help = L["Click to pick your own, right-click to go back to the scheme's hairline."],
-			shown = function() return Theme.Color("windowBorder") end,
-			source = function() return ns.Get("ui.borderAccent") and L["Accent"] or L["Hairline"] end },
-		{ kind = "toggle", key = "ui.borderAccent", label = L["Accent border"], disabled = borderOff, child = true,
-			help = L["The border takes your accent colour. Picking your own border colour turns this off."] },
-		{ kind = "slider", key = "ui.borderSize", label = L["Border thickness"], min = 1, max = 4, step = 1, format = px, disabled = borderOff, child = true,
-			help = L["In screen pixels; a thicker border grows outward. Right-click to reset."] },
-		{ kind = "toggle", key = "ui.band", label = L["Starlit band"], disabled = houseOnly, help = L["The night sky with its stars across the top of every window. Off: the plain background."] },
-		{ kind = "toggle", key = "ui.shadow", label = L["Window shadow"], disabled = houseOnly, help = L["The soft shadow under every window."] },
 	} },
 	{ page = LOOK, tab = L["Windows"], section = L["Guide window"], controls = {
 		{ kind = "dropdown", key = "ui.style", label = L["Style"], help = L["Transparent drops every background and border; text is outlined and the controls appear when you hover the window."],
@@ -450,26 +387,10 @@ local BUILTIN = {
 			search = "game menu, escape, esc, main menu, button, open polestar" },
 	} },
 	{ page = LOOK, tab = L["Arrow"], section = L["Arrow"], controls = {
-		H({ kind = "dropdown", key = "nav.arrowStyle", label = L["Arrow style"], choices = { { value = "skin", label = L["The skin's arrow"] }, { value = "3d", label = L["3D"] }, { value = "flat", label = L["Flat"] },
-			{ value = "halo", label = L["Halo"] }, { value = "hearth", label = L["Hearth"] } } }),
 		H({ kind = "slider", key = "nav.arrowScale", label = L["Arrow scale"], min = 0.5, max = 2, step = 0.05, format = percent, search = "arrow size, bigger arrow, smaller arrow" }),
 		H({ kind = "slider", key = "nav.arrowAlpha", label = L["Arrow opacity"], min = 0.2, max = 1, step = 0.05, format = percent, search = "arrow transparency, alpha" }),
 	} },
-	{ page = LOOK, tab = L["Arrow"], section = L["Colours"], controls = {
-		{ kind = "color", key = "nav.arrowColor", label = L["Arrow colour"],
-			help = L["The arrow on its way; the target's pin on the maps and the route's stops wear it too. Right-click to go back to the accent."],
-			shown = function() return Theme.Color("arrow") end,
-			source = function() return L["Accent"] end },
-		{ kind = "color", key = "nav.arrowNearColor", label = L["Arrival colour"],
-			help = L["The arrow as it closes on the target, and the ring when you arrive. Right-click to go back to jade."],
-			shown = function() return Theme.Color("arrowNear") end,
-			source = function() return L["Jade"] end },
-	} },
 	{ page = LOOK, tab = L["Arrow"], section = L["Map icons"], controls = {
-		{ kind = "dropdown", key = "nav.mapIcons", label = L["Icon pack"],
-			help = L["The medallion under every mark on the world map and the minimap. The skin's: Polestar's, Halo's, or Hearth's for Hearth and the game's own looks. Glyphs only: no medallion."],
-			choices = { { value = "skin", label = L["The skin's icons"] }, { value = "polestar", label = L["Polestar"] },
-				{ value = "halo", label = L["Halo"] }, { value = "hearth", label = L["Hearth"] }, { value = "bare", label = L["Glyphs only"] } } },
 		{ kind = "slider", key = "nav.minimapIconSize", label = L["Minimap icon size"], min = 0.5, max = 1.5, step = 0.05, format = percent,
 			help = L["Polestar's marks on the minimap; the world map keeps its own. A mark over your arrow fades so the arrow shows through it. Right-click to reset."] },
 	} },
@@ -497,7 +418,6 @@ for _, list in ipairs({
 	declare(QUESTING, "questing", "icon-accept", 40, L["Quest information, rewards and gear advice, and the quest buttons."], {
 		{ L["Quests"], { L["Quest database"], L["Tooltips and quest log"] } },
 		{ L["Rewards & gear"], { L["Quest rewards"], L["Gear advice"], L["Comparison"] } },
-		-- Talents: { L["Talents"], { L["Talent plan"] } } here once the plans are back (Talents.lua, T.SOON).
 		{ L["Buttons"], { L["Action buttons"] } },
 	}),
 	declare(DISCOVERY, "discovery", "search", 50, L["Lookup, the dungeon journal and rares: finding things in the world."], {
@@ -528,15 +448,6 @@ add({ page = QOL, tab = L["Vendors"], section = L["Trainers"], controls = { trai
 add({ page = L["Integrations"], key = "integrations", icon = "plug", order = 65,
 	subtitle = L["Settings for other addons Polestar works with, shown when they are installed."],
 	empty = L["None of the addons Polestar works with is installed."] }, true)
-add({ page = L["Integrations"], section = "EllesmereUI", controls = {
-	{ kind = "toggle", key = "ui.matchAccent", label = L["Match EllesmereUI accent"],
-		help = L["Follow EllesmereUI's accent, live. Picking your own accent turns this off."],
-		needs = function() return Theme.IsEllesmere() end },
-	{ kind = "toggle", key = "ui.matchFont", label = L["Match EllesmereUI font"],
-		help = L["Follow EllesmereUI's font, live. Choosing another font turns this off."],
-		needs = function() return Theme.IsEllesmere() end },
-} }, true)
-
 ---------------------------------------------------------------------------
 -- Custom pages: Recorder status and About
 ---------------------------------------------------------------------------
@@ -695,131 +606,6 @@ local ALIASES = {
 	characters = { "discovery", L["Characters"] }, alts = { "discovery", L["Characters"] },
 	look = { "appearance" }, qol = { "qualityoflife" },
 }
-
----------------------------------------------------------------------------
--- Appearance's live preview: a small guide window (its band, a tab, the
--- step's title, a goal done, the current goal on its accent bar, the
--- progress line) and the arrow with its distance, over the night sky. All
--- of it is painted from the theme, so the accent, scheme, skin, ground
--- opacity, band and font show in it as they change.
----------------------------------------------------------------------------
-
-local PREVIEW_H, MINI_W, MINI_PAD = 168, 270, 10
-
-function O.LookPreview(view)
-	local f = CreateFrame("Frame", nil, view)
-	f:SetHeight(PREVIEW_H)
-	if f.SetClipsChildren then f:SetClipsChildren(true) end
-	-- The sky: the deepest ground, the starlit band (gone with ui.band off),
-	-- a soft lift of the sky colour behind the window, the inner hairline.
-	W.Fill(f, "scrim", "BACKGROUND", -8)
-	f.Lift = W.Tex(f, "BACKGROUND", "glow", nil, -7)
-	W.Painter(f.Lift, function(t)
-		local r, g, b = Theme.Color("sky")
-		t:SetVertexColor(r, g, b, 0.75)
-	end)
-	f.Band = Theme.Band(f, "BACKGROUND", -6)
-	f.Band:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 0)
-	f.Band:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 0)
-	f.Band:SetHeight(Theme.BAND_H)
-	W.Painter(f, function(self) Theme.Border(self, Theme.Wash("divider")) end)
-
-	local label = W.Text(f, "caption", "textMuted")
-	label:SetText(L["Preview"])
-	label:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -12)
-	local live = W.Text(f, "small", "textMuted")
-	live:SetText(L["Live"])
-	live:SetPoint("TOPRIGHT", f, "TOPRIGHT", -14, -12)
-	local dot = W.Tex(f, "ARTWORK", "circle", "success")
-	dot:SetSize(6, 6)
-	dot:SetPoint("RIGHT", live, "LEFT", -6, 0)
-
-	-- The guide window, in the window paint of the skin in use.
-	local gw = CreateFrame("Frame", nil, f)
-	gw:SetWidth(MINI_W)
-	Theme.Skin(gw, "window")
-	local band = Theme.Band(gw, "BACKGROUND", -5)
-	band:SetPoint("TOPLEFT", gw, "TOPLEFT", 0, 0)
-	band:SetPoint("TOPRIGHT", gw, "TOPRIGHT", 0, 0)
-	band:SetHeight(48)
-	band:SetTexCoord(Theme.BandCoords(MINI_W, 48))
-	local tabGlyph = W.Tex(gw, "ARTWORK", "icon-level", "accent")
-	tabGlyph:SetSize(10, 10)
-	tabGlyph:SetPoint("LEFT", gw, "TOPLEFT", MINI_PAD, -12)
-	local tab = W.Text(gw, "small", "text")
-	tab:SetText(L["Tirisfal Glades"])
-	tab:SetPoint("LEFT", tabGlyph, "RIGHT", 6, 0)
-	local range = W.Text(gw, "small", "textMuted")
-	range:SetText("(1\226\128\14713)")
-	range:SetPoint("LEFT", tab, "RIGHT", 4, 0)
-	local tabRule = W.Divider(gw)
-	tabRule:SetPoint("TOPLEFT", gw, "TOPLEFT", 0, -24)
-	tabRule:SetPoint("TOPRIGHT", gw, "TOPRIGHT", 0, -24)
-	local tabBar = W.Tex(gw, "ARTWORK", nil, "accent")
-	tabBar:SetHeight(2)
-	tabBar:SetPoint("BOTTOMLEFT", gw, "TOPLEFT", MINI_PAD - 2, -24)
-	W.Painter(tabBar, function(t) t:SetWidth(math.ceil(W.TextWidth(tab) + 10 + 6 + 4)) end)
-	local title = W.Text(gw, "heading", "text")
-	title:SetText(L["Garren's Haunt"])
-	title:SetPoint("TOPLEFT", gw, "TOPLEFT", MINI_PAD, -32)
-	local zone = W.Text(gw, "small", "textMuted")
-	zone:SetText(L["Tirisfal Glades"])
-	zone:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
-	local function goal(y, glyph, glyphColor, textColor)
-		local g = W.Tex(gw, "ARTWORK", glyph, glyphColor)
-		g:SetSize(11, 11)
-		g:SetPoint("LEFT", gw, "TOPLEFT", MINI_PAD + 2, -y)
-		local t = W.Text(gw, "note", textColor)
-		t:SetPoint("LEFT", g, "LEFT", 18, 0)
-		t:SetWidth(MINI_W - 2 * MINI_PAD - 20)
-		return g, t
-	end
-	local _, done = goal(76, "check", "success", "textMuted")
-	done:SetText(L["Collect Doom Weed"] .. " 10/10")
-	local curGlyph, cur = goal(96, "icon-kill", "text", "text")
-	W.Painter(cur, function(fs)
-		fs:SetText(string.format(L["Kill %s"], "|c" .. Theme.Hex("npc") .. L["Rot Hide Mongrel"] .. "|r") .. "  2/5")
-	end)
-	local curBar = W.Tex(gw, "ARTWORK", nil, "accent")
-	curBar:SetSize(2, 16)
-	curBar:SetPoint("LEFT", gw, "LEFT", 0, 0)
-	curBar:SetPoint("TOP", curGlyph, "CENTER", 0, 8)
-	local progress = W.ProgressLine(gw, 3)
-	progress:SetPoint("TOPLEFT", gw, "TOPLEFT", MINI_PAD, -112)
-	progress:SetPoint("TOPRIGHT", gw, "TOPRIGHT", -MINI_PAD, -112)
-	W.SetProgress(progress, 0.38, MINI_W - 2 * MINI_PAD)
-	gw:SetHeight(112 + 3 + 9)
-
-	-- The arrow toward the goal, its distance and where it goes.
-	local arrow = W.Tex(f, "ARTWORK", "dart", "arrow")
-	arrow:SetSize(56, 56)
-	if arrow.SetRotation then arrow:SetRotation(-0.35) end
-	local dist = W.Text(f, "display", "text")
-	dist:SetText(L["381 yd"])
-	dist:SetPoint("TOP", arrow, "BOTTOM", 0, -2)
-	local to = W.Text(f, "small", "textDim")
-	to:SetPoint("TOP", dist, "BOTTOM", 0, -2)
-	W.Painter(to, function(fs)
-		fs:SetText(string.format(L["Go to %s"], "|c" .. Theme.Hex("place") .. L["Brill"] .. "|r"))
-	end)
-
-	-- -> the preview's height, its parts placed across `width`.
-	function f:Layout(width)
-		self:SetWidth(width)
-		local x = max(110, floor(width * 0.255))
-		gw:ClearAllPoints()
-		gw:SetPoint("TOPLEFT", self, "TOPLEFT", x, -28)
-		local right = x + MINI_W
-		arrow:ClearAllPoints()
-		arrow:SetPoint("TOP", self, "TOPLEFT", right + floor((width - right) / 2), -28)
-		f.Lift:ClearAllPoints()
-		f.Lift:SetSize(width * 0.7, PREVIEW_H * 1.6)
-		f.Lift:SetPoint("CENTER", self, "TOPLEFT", width * 0.4, -PREVIEW_H * 0.4)
-		f.Band:SetTexCoord(Theme.BandCoords(width, Theme.BAND_H))
-		return PREVIEW_H
-	end
-	return f
-end
 
 ---------------------------------------------------------------------------
 -- Controls and the grid

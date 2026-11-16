@@ -134,12 +134,10 @@ facet:SetTexture(MEDIA .. "arrow-facet")
 facet:SetAllPoints()
 
 local sheet = dial:CreateTexture(nil, "ARTWORK")
-sheet:SetTexture(MEDIA .. "arrow3d")
 sheet:SetSize(SPRITE, SPRITE)
 sheet:SetPoint("CENTER")
 
 local sheetSpec = dial:CreateTexture(nil, "ARTWORK", nil, 2)
-sheetSpec:SetTexture(MEDIA .. "arrow3d-spec")
 sheetSpec:SetSize(SPRITE, SPRITE)
 sheetSpec:SetPoint("CENTER")
 sheetSpec:SetBlendMode("ADD")
@@ -286,7 +284,7 @@ local routeSeen = -1  -- Travel.version the label shows; -1 = the target's own l
 local loneSeen = -1   -- Travel.version a lone walk's warning was last asked for
 local WARN_SECONDS = 8 -- a walk's "Hostile town" warning stays under its step this long
 local warning, warnUntil -- the warning being said (Travel.TakeWarning) and until when (GetTime)
-local style = "3d"    -- nav.arrowStyle
+local style = "hearth" -- Arrow.StyleFor
 local shownFrame = -1 -- sheet frame on screen (-1 = none yet)
 
 -- A target's own warning (Nav.SetTarget's `warning`: a dungeon whose way in
@@ -718,13 +716,9 @@ function Arrow:OnSettings()
 end
 
 -- The style a setting stands for: "skin" takes the skin's.
-function Arrow.StyleFor(v)
-	if v == "skin" or v == nil then
-		local Theme = ns.Theme
-		return SKIN_ARROW[Theme and Theme.SkinKey and Theme.SkinKey() or "polestar"] or "3d"
-	end
-	if v == "flat" or v == "halo" or v == "hearth" then return v end
-	return "3d"
+-- Slim build: always the game skin's dart (no 3D sheet, no style choice).
+function Arrow.StyleFor()
+	return "hearth"
 end
 
 -- The countdown line (timerText): while a timed quest's timer runs, the
