@@ -560,10 +560,9 @@ function nearEdge(edges, x, y, r) {
 	return false;
 }
 
-function engrave({ capH, bold, tracking, W = 256, H = 32 }) {
+function engrave({ capH, bold, tracking, W = 256, H = 32, text = 'POLESTAR' }) {
 	const { Font } = require('../preview/font');
 	const font = new Font(path.join(__dirname, 'fonts', 'Cinzel-Variable.ttf'));
-	const text = 'POLESTAR';
 	const scale = capH / 700; // Cinzel caps are 700 units tall
 	const track = tracking * capH;
 	let x = 1 + bold;
@@ -678,4 +677,4 @@ function generate(addonRoot) {
 // GLYPHS (24-unit shapes in SIZE-pixel space), emblemShape, band and
 // bandStars are also read by the route planner, which renders the same art
 // at its own sizes for the browser (tools/planner/glyphs.js).
-module.exports = { name: 'ui', generate, GLYPHS, SIZE, emblemShape, band, bandStars };
+module.exports = { name: 'ui', generate, GLYPHS, SIZE, emblemShape, band, bandStars, engrave };
