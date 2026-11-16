@@ -1380,12 +1380,28 @@ end
 -- client has it; Polestar's drawn menu only as a fallback. A `confirm` item
 -- asks in the game's dialog (W.Modal) instead of a second click.
 local blizzMenu
+
+-- The game's menu marks its titles, dividers and spacers ignored for the
+-- gamepad's navigation (Blizzard_Menu/MenuTemplates.lua, through
+-- SmartNavigation_MarkFrameIgnored), a secure write the client refuses from
+-- an addon's call in combat: "Interface action failed because of an AddOn".
+-- So a menu Polestar opens in combat has no title and no dividers; its
+-- buttons, checkboxes and radios mark nothing.
+function W.MenuTitle(root, text)
+	if InCombatLockdown and InCombatLockdown() then return end
+	if root.CreateTitle then root:CreateTitle(text) end
+end
+function W.MenuDivider(root)
+	if InCombatLockdown and InCombatLockdown() then return end
+	if root.CreateDivider then root:CreateDivider() end
+end
+
 local function blizzardMenu(anchor, items)
 	if not (MenuUtil and MenuUtil.CreateContextMenu) then return false end
 	blizzMenu = MenuUtil.CreateContextMenu(anchor, function(_, root)
 		for _, item in ipairs(items) do
 			if item.separator then
-				if root.CreateDivider then root:CreateDivider() end
+				W.MenuDivider(root)
 			else
 				local function run()
 					if item.disabled then return end

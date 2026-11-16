@@ -116,15 +116,15 @@ function UI.ShowPicker(opts)
 		parent:CreateRadio(guideLabel(g), function() return current and current.id == g.id end, function() load(g.id, newTabWanted(opts)) end)
 	end
 	MenuUtil.CreateContextMenu(opts.anchor or UIParent, function(_, root)
-		root:CreateTitle(newTabWanted(opts) and L["Open in new tab"] or L["Choose guide"])
+		W.MenuTitle(root, newTabWanted(opts) and L["Open in new tab"] or L["Choose guide"])
 		local sugg = G and G.Suggestions and G.Suggestions() or {}
 		if #sugg > 0 then
-			root:CreateTitle(L["Suggested for you"])
+			W.MenuTitle(root, L["Suggested for you"])
 			for i = 1, math.min(#sugg, 5) do
 				local g = G.Get(sugg[i])
 				if g then radio(root, g) end
 			end
-			root:CreateDivider()
+			W.MenuDivider(root)
 		end
 		-- Polestar's own guides by folder; a community pack's under its title.
 		local byPack = {}
@@ -147,7 +147,7 @@ function UI.ShowPicker(opts)
 		for pack, list in pairs(byPack) do if pack ~= "guides" then others[#others + 1] = pack end end
 		table.sort(others)
 		if #others > 0 then
-			root:CreateDivider()
+			W.MenuDivider(root)
 			for _, pack in ipairs(others) do
 				local r = G.Pack and G.Pack(pack)
 				local title = pack == "imported" and L["Imported guides"] or (r and packTitle(r)) or pack
@@ -162,7 +162,7 @@ function UI.ShowPicker(opts)
 				end
 			end
 		end
-		root:CreateDivider()
+		W.MenuDivider(root)
 		root:CreateButton(L["Import a guide"], function() UI.ShowImport() end)
 		root:CreateButton(L["Community guides"], function() UI.ShowPacks() end)
 	end)
@@ -186,7 +186,7 @@ function RC.Show(id)
 	end
 	waiting = nil
 	MenuUtil.CreateContextMenu(UIParent, function(_, root)
-		root:CreateTitle(L["Where to level next"])
+		W.MenuTitle(root, L["Where to level next"])
 		for _, o in ipairs(choice.options) do
 			local name = o.zoneName or o.title or o.id
 			if o.recommended then name = name .. " (" .. L["Recommended"] .. ")" end
@@ -312,7 +312,7 @@ function UI.ShowQuestRoom(anchor)
 	end
 	WHY.grey, WHY.never = L["Grey: no XP any more"], L["The route never hands it in"]
 	MenuUtil.CreateContextMenu(anchor or UIParent, function(_, root)
-		root:CreateTitle(L["Clean up quest log"])
+		W.MenuTitle(root, L["Clean up quest log"])
 		for _, u in ipairs(list) do
 			local why = WHY[u.status]
 			local b = root:CreateButton((u.title or ("#" .. u.quest)) .. (why and ("  |cff9d9d9d" .. why .. "|r") or ""), function()
@@ -531,7 +531,7 @@ function UI.ShowPacks(anchor)
 	if not (MenuUtil and MenuUtil.CreateContextMenu) then return end
 	local G = ns.Guides
 	MenuUtil.CreateContextMenu(anchor or UIParent, function(_, root)
-		root:CreateTitle(L["Community guides"])
+		W.MenuTitle(root, L["Community guides"])
 		for _, r in ipairs(packs()) do
 			local name = packTitle(r) .. (r.guideCount and ("  |cff9d9d9d" .. r.guideCount .. "|r") or "")
 			if r.status == "on" or r.status == "off" then
@@ -545,7 +545,7 @@ function UI.ShowPacks(anchor)
 		end
 		local I = ns.Import
 		local list = I and I.List and I.List() or {}
-		root:CreateDivider()
+		W.MenuDivider(root)
 		local imported = root:CreateButton(L["Imported guides"] .. " (" .. #list .. ")")
 		for _, e in ipairs(list) do
 			local sub = imported:CreateButton(e.title .. (e.author and ("  |cff9d9d9d" .. e.author .. "|r") or ""))
