@@ -199,4 +199,3 @@ end, L["Print your map and position as guide lines"])
 ns.RegisterCommand("questlog", function() ns.Fire("SHOW_QUEST_ROOM") end, L["List the quests in your log the route never hands in"])
 
 
-ns.RegisterCommand("packs", function() ns.Fire("SHOW_OPTIONS", "guidepacks") end, L["Open the Community guides page"])

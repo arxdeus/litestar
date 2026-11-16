@@ -1143,6 +1143,8 @@ L["Keep these, a later guide hands them in: %s"] = "Не отменяйте эт
 L["Press %s, or right-click the minimap button and pick Guide window, to show it."] = "Нажмите %s или щёлкните правой кнопкой по кнопке у миникарты и выберите «Окно гайда», чтобы показать его."
 L["Right-click the minimap button and pick Guide window to show it."] = "Щёлкните правой кнопкой по кнопке у миникарты и выберите «Окно гайда», чтобы показать его."
 L["Clears your manual check-offs and skipped steps in this guide from your last quest progress on. The guide stays where your quests put you."] = "Сбрасывает ручные отметки и пропущенные шаги этого гайда начиная с последнего продвижения по заданиям. Гайд остается там, куда вас привели задания."
+L["Import a guide"] = "Импорт гайда"
+L["Shift-click: open in a new tab"] = "Shift-клик: открыть в новой вкладке"
 
 -- UI/JourneyPanel.lua
 L["Lift to %s"] = "Подъемник до %s"
@@ -1538,7 +1540,6 @@ L["The route ahead isn't settled yet (a guide to choose or load), so it can't sa
 L["The route hands in every quest in your log."] = "Маршрут сдаёт все задания из вашего журнала."
 L["Clean up quest log (%d)"] = "Очистить журнал заданий (%d)"
 L["Clean up quest log"] = "Очистить журнал заданий"
-L["The route doesn't need these: it never hands them in, or they give no XP any more. Abandon asks in the game's own window first."] = "Маршруту они не нужны: он их не сдаёт, или они больше не дают опыта. «Отказаться» сначала спрашивает в окне самой игры."
 L["Lists the quests in your log the route doesn't need: those it never hands in, and grey ones that give no XP any more. Each has an Abandon button that asks first. The guide window's menu has it too while there are any."] = "Показывает задания в журнале, которые маршруту не нужны: те, что он никогда не сдаёт, и серые, которые больше не дают опыта. У каждого есть кнопка «Отказаться», которая сначала спрашивает. Пока такие есть, это есть и в меню окна гайда."
 
 -- UI/ClassCard.lua
@@ -1656,7 +1657,37 @@ L["Old rank cards are off. Turn them back on under Options > Quality of Life > V
 
 -- UI/BlizzardSettings.lua
 L["Polestar's settings open after combat."] = "Настройки Polestar откроются после боя."
+L["Guides made by other players: switch them on or off, and choose where suggestions come from."] = "Гайды других игроков: включайте и выключайте их и выбирайте источник предложений."
 
 -- UI/GameUI.lua
 L["You reached the end of %s."] = "Гайд «%s» пройден."
 L["Start"] = "Начать"
+L["Imported guides"] = "Импортированные гайды"
+L["Grey: no XP any more"] = "Серое: опыта больше нет"
+L["The route never hands it in"] = "Маршрут его не сдаёт"
+L["Abandon it from your quest log."] = "Откажитесь от него в журнале заданий."
+L["Abandon asks in the game's own window first."] = "«Отказаться» сначала спрашивает в окне самой игры."
+L["Alliance and Horde"] = "Альянс и Орда"
+L["by %s"] = "автор: %s"
+L["You already have this version."] = "Эта версия у вас уже есть."
+L["You have a newer version of this guide."] = "У вас более новая версия этого гайда."
+L["The author is different from the guide you have."] = "Автор не тот, что у вашего гайда."
+L["The licence is different from the guide you have."] = "Лицензия не та, что у вашего гайда."
+L["Update"] = "Обновить"
+L["Import"] = "Импорт"
+L["Imported %s."] = "Импортирован гайд %s."
+L["Paste an import string (Ctrl+V, Cmd+V on a Mac)."] = "Вставьте строку импорта (Ctrl+V, на Mac Cmd+V)."
+L["Turn on and reload"] = "Включить и перезагрузить"
+L["Not now"] = "Не сейчас"
+L["Polestar Guides is turned off in the AddOns list, so Polestar has no guides to show. Turn it on for all your characters and reload?"] = "Polestar Guides отключен в списке модификаций, поэтому у Polestar нет гайдов для показа. Включить его для всех ваших персонажей и перезагрузить?"
+L["turned off in the AddOns list"] = "отключен в списке модификаций"
+L["not loaded: %s"] = "не загружен: %s"
+L["not loaded"] = "не загружен"
+L["needs Polestar %s or newer"] = "нужен Polestar %s или новее"
+L["needs a newer Polestar"] = "нужен более новый Polestar"
+L["broken: registered no guides"] = "сломан: не зарегистрировал гайдов"
+L["refused: %s"] = "отклонен: %s"
+L["Open"] = "Открыть"
+L["Delete"] = "Удалить"
+L["Suggestions from"] = "Предложения из"
+

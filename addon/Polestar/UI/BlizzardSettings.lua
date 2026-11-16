@@ -187,10 +187,18 @@ function BS.Build()
 	-- The main category: what the addon is, and its commands.
 	header(mainLayout, L["Leveling guides for World of Warcraft: Forever."])
 	if CreateSettingsButtonInitializer and mainLayout then
-		mainLayout:AddInitializer(CreateSettingsButtonInitializer(L["Choose guide"], L["Choose guide"], function()
-			if SettingsPanel and SettingsPanel:IsShown() and HideUIPanel and not (InCombatLockdown and InCombatLockdown()) then HideUIPanel(SettingsPanel) end
-			if UI.ShowPicker then UI.ShowPicker() end
-		end, L["Choose a guide"], false))
+		-- Each closes the panel (never in combat) and opens the game's menu or dialog.
+		local function after(fn)
+			return function()
+				if SettingsPanel and SettingsPanel:IsShown() and HideUIPanel and not (InCombatLockdown and InCombatLockdown()) then HideUIPanel(SettingsPanel) end
+				fn()
+			end
+		end
+		mainLayout:AddInitializer(CreateSettingsButtonInitializer(L["Choose guide"], L["Choose guide"], after(function() UI.ShowPicker() end), L["Choose a guide"], false))
+		mainLayout:AddInitializer(CreateSettingsButtonInitializer(L["Community guides"], L["Open"], after(function() UI.ShowPacks() end),
+			L["Guides made by other players: switch them on or off, and choose where suggestions come from."], false))
+		mainLayout:AddInitializer(CreateSettingsButtonInitializer(L["Import a guide"], L["Import"], after(function() UI.ShowImport() end),
+			L["Paste an import string (Ctrl+V, Cmd+V on a Mac)."], false))
 	end
 	Settings.RegisterAddOnCategory(main)
 	UI.settingsCategory = main

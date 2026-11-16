@@ -2512,7 +2512,7 @@ local function setEmpty(kind)
 		end
 		empty.Primary:Show()
 		W.SetButtonText(empty.Secondary, L["Community guides"])
-		empty.Secondary.psAction = function() UI.ShowOptions("guidepacks") end
+		empty.Secondary.psAction = function() UI.ShowPacks() end
 		empty.Secondary:Show()
 	elseif kind == "noguides" and UI.Packs and UI.Packs.OwnGuidesOff() then
 		-- Polestar Guides installed but unticked in the AddOns list: one
@@ -2528,7 +2528,7 @@ local function setEmpty(kind)
 		empty.Title:SetText(L["No guides shown"])
 		empty.Text:SetText(L["The community addons are switched off. Turn one on under Options, Community guides (/polestar packs)."])
 		W.SetButtonText(empty.Primary, L["Community guides"])
-		empty.Primary.psAction = function() UI.ShowOptions("guidepacks") end
+		empty.Primary.psAction = function() UI.ShowPacks() end
 		empty.Primary:Show()
 	elseif kind == "noguides" then
 		empty.Title:SetText(L["No guides installed"])
@@ -4075,7 +4075,7 @@ function GF.ApplySkin()
 	nav.Next:SetPoint("LEFT", nav.Steps.Count, "RIGHT", gap, 0)
 	local iw, ih, ig = Theme.Metric("guideIconBtnW", 24), Theme.Metric("guideIconBtnH", 24), Theme.Metric("guideIcon", 14)
 	-- The icon buttons right of Skip share the skin's sizes.
-	for _, key in ipairs({ "Menu", "Nearby" }) do
+	for _, key in ipairs({ "Menu", "Lookup", "Nearby" }) do
 		local b = rawget(nav, key)
 		if b then
 			b:SetSize(iw, ih)
@@ -4249,8 +4249,9 @@ local function openMenu(button)
 	local hasGuide = E and E.GetGuide and E.GetGuide()
 	local clear = transparent()
 	local items = {
-		{ text = L["Choose guide"], icon = "search", onClick = function() UI.ShowPicker() end },
-		{ text = L["Open in new tab"], icon = "plus", disabled = not (E and E.OpenTab), onClick = function() UI.ShowPicker({ newTab = true }) end },
+		{ text = L["Choose guide"], icon = "guides", onClick = function() UI.ShowPicker({ anchor = button }) end },
+		{ text = L["Open in new tab"], icon = "plus", disabled = not (E and E.OpenTab), onClick = function() UI.ShowPicker({ newTab = true, anchor = button }) end },
+		{ text = L["Import a guide"], icon = "plus", onClick = function() if UI.ShowImport then UI.ShowImport() end end },
 		-- No step on screen (a finished guide): nothing to skip, as with the navigator's Skip.
 		{ text = L["Skip this step"], icon = "skip", disabled = not (hasGuide and E.GetStepIndex and E.GetStepIndex()), onClick = function() GF.SkipStep() end },
 		{ separator = true },
@@ -4610,11 +4611,12 @@ local function build()
 	nav.Menu = W.IconButton(nav, "menu", 24, L["Menu"], openMenu)
 	nav.Menu:SetPoint("RIGHT", nav, "RIGHT", -8, 0)
 	GF.menuButton = nav.Menu
-	-- Lookup opens the existing search section without changing the guide.
-	-- Slim build: no Lookup window; an empty anchor keeps the row's layout.
-	nav.Lookup = CreateFrame("Frame", nil, nav)
-	nav.Lookup:SetSize(0.01, 24)
+	-- Choosing a guide, one click: the game's menu of guides (UI/GameUI.lua).
+	-- Kept under its old name: the row's layout anchors on nav.Lookup.
+	nav.Lookup = W.IconButton(nav, "guides", 24, L["Choose guide"], function(self) UI.ShowPicker({ anchor = self }) end)
+	nav.Lookup.psTipLines = { L["Shift-click: open in a new tab"] }
 	nav.Lookup:SetPoint("RIGHT", nav.Menu, "LEFT", 0, 0)
+	GF.guidesButton = nav.Lookup
 	-- Nearby services: left of the bug, right of Skip.
 	nav.Nearby = W.IconButton(nav, "icon-goto", 24, L["Nearby services"], openNearby)
 	nav.Nearby.psTipLines = { L["Points the arrow at the nearest vendor, repair, inn, flight master or trainer."] }
@@ -4677,11 +4679,11 @@ local function build()
 		scrubAt = nil
 		UI.StepList.Toggle()
 	end)
-	for _, b in ipairs({ nav.Menu, nav.Nearby, nav.Next, nav.Prev, nav.Skip }) do hoverable(b) end
+	for _, b in ipairs({ nav.Menu, nav.Lookup, nav.Nearby, nav.Next, nav.Prev, nav.Skip }) do hoverable(b) end
 	-- Transparent chrome: the step number fades with its chevrons (nav.Steps
 	-- holds all three) and the title with them; a lone "3 / 8" over the world
 	-- would read as a stray number. Progress stays readable in the foot.
-	for _, c in ipairs({ nav.Menu, nav.Nearby, nav.Skip, nav.Steps, nav.Title }) do chrome[#chrome + 1] = c end
+	for _, c in ipairs({ nav.Menu, nav.Lookup, nav.Nearby, nav.Skip, nav.Steps, nav.Title }) do chrome[#chrome + 1] = c end
 
 	-- Body
 	body = CreateFrame("Frame", nil, F)
