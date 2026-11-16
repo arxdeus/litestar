@@ -19,15 +19,7 @@ local floor, format = math.floor, string.format
 -- "Modules": Polestar integrates with EllesmereUI, never fights it). While
 -- the module is installed and enabled for this character, the overlapping
 -- toggle defaults to off; the player can still turn it on.
-local COVERED = {
-	sellJunk = "EllesmereUIQoL",           -- Auto Sell Junk
-	autoRepair = "EllesmereUIQoL",         -- Auto Repair
-	repairGuild = "EllesmereUIQoL",        -- Use Guild Bank Funds
-	fastLoot = "EllesmereUIQoL",           -- Quick Loot
-	skipGossip = "EllesmereUIQoL",         -- Auto Select Single Gossip
-	hideErrors = "EllesmereUIQoL",         -- Hide Error Messages
-	acceptPartyFriends = "EllesmereUIFriends", -- auto-accept invites from friends
-}
+local COVERED = {}
 
 -- The EllesmereUI module doing `key`'s job, when it is there; nil otherwise.
 function QoL.CoveredBy(key)
@@ -55,38 +47,10 @@ local defaults = {
 	xpTracker = true,
 	xpTargetMark = true,     -- the guide's level target on the game's XP bar
 	boostedRest = true,      -- Boosted Rest and the sleeping bag on the XP line, the party's in the party panel
-	sellJunk = true,
-	autoRepair = true,
-	repairGuild = false,     -- guild bank first when the rank allows
-	buyGoals = false,        -- buy what the step's buy goals still need
-	restock = true,          -- the merchant's Restock button, for the amounts set per character
-	itemMarks = true,        -- Ctrl+Alt-click marks an item as junk or to keep
-	bagSpace = true,         -- free bag slots: the junk button and the bags-full banner
-	bagsLow = 2,             -- ... at this many free slots or fewer
 	rewardHighlight = true,
-	rewardAutoPick = false,
-	rewardEquip = false,     -- wear what a turn-in gives when it is an upgrade
-	wearOffer = true,        -- offer gear from loot or a merchant that is an upgrade
-	flightAutoOpen = true,
 	flightHighlight = true,
-	flightAutoTake = false,  -- take the guide's flight as soon as the flight map opens (QoL/Flight.lua, #1621)
-	stepGossip = true,       -- pick the gossip option the live step asks for, open goods or training for its buy and train goals (QoL/Gossip.lua)
-	autoBind = false,        -- bind the Hearthstone at the step's innkeeper
 	deathHelper = true,
 	breathWarning = false,   -- red screen edge, sound and taskbar flash as breath runs out (QoL/Breath.lua)
-	instantQuestText = true,
-	skipGossip = true,
-	fastLoot = true,
-	hideErrors = false,      -- combat error spam ("Not enough rage", "Out of range")
-	autoReleasePvP = false,  -- release at once in battlegrounds
-	hideQuestTracker = false, -- the game's objective tracker, as Questie can
-	instanceTrack = true,    -- in a dungeon, the quest tracker watches only its quests (QoL/InstanceTrack.lua)
-	declineDuels = false,    -- friends and guild excepted
-	declineGuildInvites = false,
-	declinePartyStrangers = false,
-	acceptPartyFriends = false,
-	acceptSummon = false,
-	acceptResurrect = false,
 }
 for key in pairs(COVERED) do
 	if defaults[key] and QoL.CoveredBy(key) then defaults[key] = false end
@@ -254,56 +218,6 @@ function QoL.OnStep(fn)
 end
 
 ---------------------------------------------------------------------------
--- Gossip and Blizzard's dialogs, for the helpers that answer them
----------------------------------------------------------------------------
-
--- The open gossip offers a quest to pick up or one to hand in: the quest
--- automation goes first, so a helper leaves such a gossip alone.
-function QoL.HasQuestBusiness()
-	local G = C_GossipInfo
-	if not G then return false end
-	if (G.GetNumAvailableQuests and G.GetNumAvailableQuests() or 0) > 0 then return true end
-	if G.GetActiveQuests then
-		local active = G.GetActiveQuests() or {}
-		for i = 1, #active do
-			if active[i].isComplete then return true end
-		end
-	end
-	return false
-end
-
--- Picks a gossip option by its ID, else its order index; false when the
--- client offers neither.
-function QoL.SelectGossip(opt)
-	local G = C_GossipInfo
-	if opt.gossipOptionID and G and G.SelectOption then
-		G.SelectOption(opt.gossipOptionID)
-	elseif G and G.SelectOptionByIndex then
-		G.SelectOptionByIndex(opt.orderIndex)
-	else
-		return false
-	end
-	return true
-end
-
--- Answering through the API leaves Blizzard's dialog up, so it is closed on
--- the next frame, after Blizzard's own handler has shown it; `mark` is a
--- field its OnHide reads to know it was answered. Under Forever's Gamepad
--- interface style (ns.GamepadUI, Core/Init.lua) dialogs belong to the
--- gamepad focus system and are left for the player to dismiss.
-function QoL.ClosePopup(which, mark)
-	local function close()
-		if ns.GamepadUI() or not StaticPopup_Hide then return end
-		if mark and StaticPopup_FindVisible then
-			local dialog = StaticPopup_FindVisible(which)
-			if dialog then dialog[mark] = 1 end
-		end
-		StaticPopup_Hide(which)
-	end
-	if C_Timer and C_Timer.After then ns.After(0, close) else close() end
-end
-
----------------------------------------------------------------------------
 -- Client calls Compat does not cover. Secret values read as unknown.
 ---------------------------------------------------------------------------
 
@@ -363,11 +277,6 @@ function Client.SlotStartsQuest(bag, slot)
 	local q = info and readable(info.questID)
 	if type(q) ~= "number" or q <= 0 or info.isActive == true then return nil end
 	return q
-end
-
-function Client.UseSlot(bag, slot)
-	local C = C_Container
-	if C and C.UseContainerItem then C.UseContainerItem(bag, slot) end
 end
 
 -- Free slots in one bag and its family: 0 (or nil) for a bag that holds

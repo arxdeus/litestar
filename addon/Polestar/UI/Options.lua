@@ -318,8 +318,6 @@ local BUILTIN = {
 			child = true, disabled = function() return not ns.Get("nav.tomtom") end }),
 	} },
 	{ page = GUIDE, tab = L["Automation"], section = L["Quests"], controls = {
-		{ kind = "toggle", key = "behavior.closeSkipped", label = L["Close offers the guide skips"], help = L["After Polestar accepts or turns in a quest, closes the quest window the NPC opens next when the guide skips its quests. Hold Shift to keep it open."],
-			search = "close quest window, auto close, skip quests" },
 		{ kind = "toggle", key = "behavior.warnClosing", label = L["Warn about missable quests"], help = L["Before you take a quest that closes another for good, says which in chat and leaves the accept to you."],
 			search = "missable, exclusive quests, breadcrumb, warning" },
 		{ kind = "toggle", key = "behavior.skipGrey", label = L["Skip grey quests"], help = L["Leaves out grey quests and their turn-ins, unless a later quest needs them first."],
@@ -556,12 +554,6 @@ add({ page = L["Integrations"], section = "EllesmereUI", controls = {
 	{ kind = "toggle", key = "ui.matchFont", label = L["Match EllesmereUI font"],
 		help = L["Follow EllesmereUI's font, live. Choosing another font turns this off."],
 		needs = function() return Theme.IsEllesmere() end },
-} }, true)
-add({ page = L["Integrations"], section = "Spoken", controls = {
-	{ kind = "toggle", key = "behavior.spokenDelay", label = L["Wait for Spoken"],
-		help = L["Waits 200 ms before each automatic quest accept, turn-in and reward pick, so Spoken has time to notice the window and read it."],
-		search = "voice, narration, read aloud, dialogue, delay",
-		needs = function() return ns.Compat.AddOnPresent("Spoken_Quests") end },
 } }, true)
 
 ---------------------------------------------------------------------------

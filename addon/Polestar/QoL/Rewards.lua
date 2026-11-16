@@ -353,11 +353,6 @@ local function questID()
 	return type(q) == "number" and q > 0 and q or nil
 end
 
--- Whether auto-pick may take a reward from the panel of `quest` now.
-local function mayTake(gen, quest)
-	return gen == generation and quest and questID() == quest and QoL.On("rewardAutoPick") and not QoL.Shift()
-end
-
 local function evaluate(gen, tries, quest)
 	if gen ~= generation then return end
 	if quest and questID() ~= quest then return end
@@ -379,21 +374,6 @@ local function evaluate(gen, tries, quest)
 	local best = order[1]
 	Rewards.best, Rewards.reason, Rewards.order = best, reason, order
 	local why = reason == "upgrade" and L["upgrade"] or L["best vendor value"]
-	if mayTake(gen, quest) then
-		local money = GetQuestMoneyToGet and ns.Compat.Readable(GetQuestMoneyToGet())
-		if money == 0 and GetQuestReward then
-			local function take()
-				GetQuestReward(best)
-				ns.Print(format(L["Took %s (%s)."], choices[best].link or ("#" .. best), why))
-			end
-			-- Automation's wait for Spoken: the marks show until it ends, and stay if Shift stops it.
-			local delay = ns.Automation and ns.Automation.Delay()
-			if not delay then return take() end
-			Rewards.Mark()
-			ns.After(delay, function() if mayTake(gen, quest) then take() end end)
-			return
-		end
-	end
 	if QoL.On("rewardHighlight") and not ns.Hidden() and Rewards.Mark() ~= true then
 		ns.Print(format(L["Best reward: %s (%s)."], choices[best].link or ("#" .. best), why))
 	end
@@ -407,7 +387,7 @@ end
 
 function Rewards.OnQuestComplete()
 	reset()
-	if not (QoL.On("rewardHighlight") or QoL.On("rewardAutoPick")) then return end
+	if not QoL.On("rewardHighlight") then return end
 	local gen, quest = generation, questID()
 	-- The panel lays its buttons out in the same event; mark them after it.
 	if C_Timer and C_Timer.After then
@@ -439,7 +419,7 @@ ns.RegisterEvent("QUEST_FINISHED", reset)
 ns.RegisterEvent("GET_ITEM_INFO_RECEIVED", function() if shown() then schedule() end end)
 ns.On("GEAR_UPDATED", function() if shown() then schedule() end end)
 ns.On("SETTING_CHANGED", function(path)
-	if path == "qol.rewardAutoPick" or path == "qol.rewardHighlight" or path == "qol" or path == "" then
+	if path == "qol.rewardHighlight" or path == "qol" or path == "" then
 		reset()
 		schedule()
 	end

@@ -51,22 +51,6 @@ function Flight.TaxiOption(options)
 	return nil
 end
 
--- Shift held when a flight master's gossip opened: the flight map opened
--- from it is only shown, never flown from (Flight.AutoTake). Until the map
--- closes, or the next gossip.
-local shiftGossip = false
-
--- Returns true when it opened the flight map (the gossip is then gone).
-function Flight.OnGossip()
-	local G = C_GossipInfo
-	if not (G and G.GetOptions) then return false end
-	local opt = Flight.TaxiOption(G.GetOptions() or {})
-	shiftGossip = opt ~= nil and QoL.Shift()
-	if not QoL.On("flightAutoOpen") or QoL.Shift() then return false end
-	if QoL.HasQuestBusiness() then return false end
-	return opt ~= nil and QoL.SelectGossip(opt)
-end
-
 ---------------------------------------------------------------------------
 -- Destination
 ---------------------------------------------------------------------------
@@ -425,22 +409,9 @@ function Flight.Take()
 	return true
 end
 
--- Whether this open of the map has already had its one AutoTake.
-local autoTried = false
-
--- qol.flightAutoTake: the flight map that just opened takes the marked
--- flight as the step key would (Flight.Take), once per open, unless Shift
--- is or was held at the flight master. True if taken.
-function Flight.AutoTake()
-	if autoTried or not QoL.On("flightAutoTake") or shiftGossip or QoL.Shift() then return false end
-	autoTried = true
-	return Flight.Take()
-end
-
 -- The map's own work on opening: mark the node, then take the flight.
 local function onOpen()
 	Flight.Highlight()
-	Flight.AutoTake()
 end
 
 function Flight.Drawn() return drawnSlot end
@@ -453,7 +424,6 @@ ns.RegisterEvent("TAXIMAP_OPENED", function()
 end)
 ns.RegisterEvent("TAXIMAP_CLOSED", function()
 	Flight.destination, Flight.node, Flight.open = nil, nil, false
-	shiftGossip, autoTried = false, false
 	if mark then mark:Hide() end
 	hideLines()
 	drawnSlot = nil

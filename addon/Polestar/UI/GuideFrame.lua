@@ -1523,11 +1523,6 @@ local function bannerNotice()
 	if notices.train then return "train", notices.train end
 	if notices.riding then return "riding", notices.riding end
 	if notices.classQuest then return "classQuest", notices.classQuest end
-	local Q = ns.QoL
-	local bags = Q and Q.Space and Q.Space.Banner and Q.Space.Banner()
-	if bags then return "bags", bags end
-	local wear = Q and Q.Wear and Q.Wear.Offer and Q.Wear.Offer()
-	if wear then return "wear", wear end
 	return nil
 end
 GF.BannerNotice = bannerNotice
@@ -1850,32 +1845,6 @@ function GF.LayoutBanner(width)
 		local w = placeLink(banner.Jump, L["Open in a tab"], 0, -4)
 		placeLink(banner.Later, L["Later"], w + 10, -4)
 		banner.Close:Show()
-	elseif kind == "bags" then
-		banner.Icon:SetTexture(Theme.Media("icon-collect"))
-		local title = n.free == 0 and L["Your bags are full."]
-			or string.format(n.free == 1 and L["Bags nearly full: %d slot left."] or L["Bags nearly full: %d slots left."], n.free)
-		local j, Q = n.junk, ns.QoL
-		if j then
-			local worth = j.value < math.huge and Q.Money(j.value) or "?"
-			banner.Text:SetText(title .. "\n" .. string.format(L["Cheapest junk: %s (%s)"], Q.Space.ItemText(j), worth))
-			placeLink(banner.Jump, n.armed and L["Click again to delete it"] or L["Delete it"], 0, -4)
-		else
-			banner.Text:SetText(title .. "\n" .. L["No junk to make room with. Ctrl+Alt-click an item to mark it as junk."])
-			banner.Jump:Hide()
-		end
-		banner.Close:Show()
-	elseif kind == "wear" then
-		banner.Icon:SetTexture(Theme.Media("icon-use"))
-		local G = ns.Gear
-		local parts = { string.format(L["Upgrade: %s"], n.link or "") }
-		local gain = n.pct and G and G.GainText and G.GainText(n.pct)
-		if gain then parts[#parts + 1] = gain end
-		local slot = G and G.SlotName and G.SlotName(n.slot)
-		if slot then parts[#parts + 1] = slot end
-		banner.Text:SetText(table.concat(parts, "  \194\183  "))
-		local w = placeLink(banner.Jump, L["Wear it"], 0, -4)
-		placeLink(banner.Later, L["Not this one"], w + 10, -4)
-		banner.Close:Show()
 	end
 	local h = floor(9 + banner.Text:GetStringHeight() + 4 + 18 + 9 + 0.5)
 	banner:SetHeight(h)
@@ -1943,11 +1912,6 @@ function GF.TakeBanner()
 		if E and E.OpenTab then E.OpenTab(n.guideId) end
 		local CQ = ns.QoL and ns.QoL.ClassQuests
 		if CQ and CQ.Resolve then CQ.Resolve(n.guideId) end
-	elseif kind == "bags" then
-		-- The first click arms the item, the second deletes it.
-		ns.QoL.Space.Press()
-	elseif kind == "wear" then
-		ns.QoL.Wear.Take()
 	end
 	GF.Layout()
 end
@@ -1963,9 +1927,6 @@ function GF.LaterBanner()
 		GF.Layout()
 	elseif kind == "lost" then
 		if E and E.AnswerLost then E.AnswerLost(n.quest, "skip") end
-		GF.Layout()
-	elseif kind == "wear" then
-		ns.QoL.Wear.Decline()
 		GF.Layout()
 	else
 		GF.DismissBanner(true)
@@ -1995,10 +1956,6 @@ function GF.DismissBanner(later)
 		notices.classQuest = nil
 		local CQ = ns.QoL and ns.QoL.ClassQuests
 		if CQ and CQ.Resolve then CQ.Resolve(n.guideId, later == true) end
-	elseif kind == "bags" then
-		ns.QoL.Space.Dismiss()
-	elseif kind == "wear" then
-		ns.QoL.Wear.Dismiss()
 	elseif kind == "ended" then
 		notices.endSeen = n.guideId
 	elseif kind then
@@ -5458,14 +5415,6 @@ ns.On("NAV_TRIP", function()
 	if F and ns.IsLoggedIn() then GF.Layout() end
 end)
 
--- The bags' free slots or their cheapest junk changed (QoL/Space.lua), or
--- the gear offer did (QoL/Wear.lua): their banners come, change or go.
-ns.On("BAG_SPACE", function()
-	if F and ns.IsLoggedIn() then GF.Layout() end
-end)
-ns.On("WEAR_OFFER", function()
-	if F and ns.IsLoggedIn() then GF.Layout() end
-end)
 
 ns.On("SETTING_CHANGED", function(path)
 	if not F then return end
