@@ -28,7 +28,8 @@ pub struct Addon {
 	pub title: &'static str,
 }
 
-pub const ADDONS: [Addon; 2] = [Addon { name: "Polestar", title: "Polestar's interface strings" }, Addon { name: "Polestar_Recorder", title: "Polestar Recorder's interface strings" }];
+// Slim build: the Recorder is gone, only Polestar's own strings remain.
+pub const ADDONS: [Addon; 1] = [Addon { name: "Polestar", title: "Polestar's interface strings" }];
 
 /// `n word` or `n words`.
 pub fn plural(n: usize, word: &str) -> String {
