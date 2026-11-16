@@ -301,14 +301,6 @@ local EUI_LISTS = { "plates", "friendlyPlates" }
 
 -- host: the addon's frame for this unit; bar: its health bar (or nil).
 local function knownPlate(plate, unit)
-	local eui = _G.EllesmereNameplates_NS
-	if type(eui) == "table" then
-		for i = 1, #EUI_LISTS do
-			local list = eui[EUI_LISTS[i]]
-			local p = type(list) == "table" and list[unit]
-			if type(p) == "table" and p.nameplate == plate and shown(p) then return p, p.health end
-		end
-	end
 	local uf = plate.unitFrame -- Plater (.healthBar), ElvUI and other oUF plates (.Health)
 	if uf ~= plate.UnitFrame and shown(uf) then return uf, uf.healthBar or uf.Health end
 	local kui = plate.kui -- KuiNameplates

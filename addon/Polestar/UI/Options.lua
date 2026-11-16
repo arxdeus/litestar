@@ -249,13 +249,10 @@ local BUILTIN = {
 			search = "dungeon, raid, battleground, arena, instance, hide, pvp, healer",
 			choices = { { value = "show", label = L["Keep visible"] }, { value = "hide", label = L["Hide"] } } },
 	} },
-	-- Ways to show and hide Polestar without typing: UI/Launcher.lua's floating button, and the minimap
+	-- Ways to show and hide Polestar without typing: the minimap
 	-- button (Maps/MinimapButton.lua; also on Map and Quality of Life), next to the rules above. Hiding
 	-- Polestar (Core/Init.lua) is per character: so is whether it keeps the arrow.
 	{ page = GUIDE, tab = L["Window"], section = L["Show and hide"], controls = {
-		{ kind = "toggle", key = "ui.launcher", label = L["Floating button"],
-			help = L["A small Polestar button you can put anywhere on the screen. Click to hide or show Polestar, right-click for a menu, drag to move it. It hides with the window in combat and in dungeons when those are set to Hide."],
-			search = "launcher, floating icon, floating button, show, hide, toggle, open polestar, quick" },
 		{ kind = "toggle", key = "maps.minimapButton", label = L["Minimap button"],
 			help = L["A Polestar button on the edge of the minimap. Click to hide or show Polestar, right-click for a menu, drag to move it."],
 			search = "minimap icon, minimap button, hide button, launcher" },
@@ -300,9 +297,6 @@ local BUILTIN = {
 	} },
 	{ page = GUIDE, tab = L["Arrow & routes"], section = L["Other waypoints"], controls = {
 		H({ kind = "toggle", key = "nav.blizzardWaypoint", label = L["Blizzard waypoint"], help = L["Also set the game's own map pin and tracking."], search = "map pin, waypoint, user waypoint, supertrack" }),
-		H({ kind = "toggle", key = "nav.tomtom", label = L["Mirror to TomTom"], help = L["Adds the target as a TomTom waypoint when TomTom is loaded."], search = "waypoints, tomtom" }),
-		H({ kind = "toggle", key = "nav.useTomTomArrow", label = L["Use TomTom's arrow"], help = L["Hides Polestar's arrow in favour of TomTom's, except on the way to another continent, where TomTom's arrow cannot point."],
-			child = true, disabled = function() return not ns.Get("nav.tomtom") end }),
 	} },
 	{ page = GUIDE, tab = L["Automation"], section = L["Quests"], controls = {
 		{ kind = "toggle", key = "behavior.warnClosing", label = L["Warn about missable quests"], help = L["Before you take a quest that closes another for good, says which in chat and leaves the accept to you."],
@@ -369,9 +363,6 @@ local BUILTIN = {
 	{ page = LOOK, tab = L["Windows"], section = L["Menus"], controls = {
 		{ kind = "slider", key = "ui.menuScale", label = L["Menu scale"], min = 0.7, max = 1.4, step = 0.05, format = percent, release = true,
 			help = L["The guide menu and this window; applies when you let go. Right-click to reset."] },
-		{ kind = "toggle", key = "ui.gameMenuButton", label = L["Button in the game menu"],
-			help = L["A Polestar button in the game menu (Esc) that opens the guide menu."],
-			search = "game menu, escape, esc, main menu, button, open polestar" },
 	} },
 	{ page = LOOK, tab = L["Arrow"], section = L["Arrow"], controls = {
 		H({ kind = "slider", key = "nav.arrowScale", label = L["Arrow scale"], min = 0.5, max = 2, step = 0.05, format = percent, search = "arrow size, bigger arrow, smaller arrow" }),
@@ -425,17 +416,6 @@ end
 
 for _, spec in ipairs(BUILTIN) do add(spec, true) end
 add({ page = QOL, tab = L["Vendors"], section = L["Trainers"], controls = { trainReminder() } }, true)
-
--- Integrations: a section per supported addon, each registered by its
--- module with needs = the addon is present (Compat.AddOnPresent), so only
--- installed addons show. The page stays in the list with none (`empty`:
--- the line it shows then).
-add({ page = L["Integrations"], key = "integrations", icon = "plug", order = 65,
-	subtitle = L["Settings for other addons Polestar works with, shown when they are installed."],
-	empty = L["None of the addons Polestar works with is installed."] }, true)
----------------------------------------------------------------------------
--- Custom pages: Recorder status and About
----------------------------------------------------------------------------
 
 -- Two widgets side by side in the body's columns at y, sized by
 -- layout(widget, width) -> height and both as tall as the taller. -> height
@@ -523,10 +503,9 @@ local function buildAbout(view)
 		.. hex .. "/polestar guides|r   " .. L["choose a guide"] .. "\n"
 		.. hex .. "/polestar next, prev, skip|r   " .. L["move through steps"] .. "\n"
 		.. hex .. "/polestar help|r   " .. L["every command"])
-	local credH, credText = block(L["Credits"], L["Inter typeface by The Inter Project Authors, SIL Open Font License 1.1."] .. "\n"
+	local credH, credText = block(L["Credits"], "Fira Sans by The Mozilla Foundation and Telefonica S.A., SIL Open Font License 1.1." .. "\n"
 		.. L["Wordmark set in Cinzel by The Cinzel Project Authors, SIL Open Font License 1.1."] .. "\n"
-		.. L["Quest and map data includes pfQuest by shagu (MIT License)."] .. "\n"
-		.. L["With EllesmereUI installed, Polestar can follow its accent, font and panel colour through its public skinning API."])
+		.. L["Quest and map data includes pfQuest by shagu (MIT License)."])
 	local maintH = W.SectionHeader(view)
 	W.SetSection(maintH, L["Maintenance"])
 	local resetAll = W.ActionTile(view, "reset", L["Reset all settings"], L["Every Polestar setting back to default. Progress is kept."],

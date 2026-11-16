@@ -42,8 +42,6 @@ ns.RegisterDefaults("nav", {
 	minimapRoute = true, -- the route line (or trail) on the minimap; off keeps the pin (Maps/RouteLines.lua, Nav/Layers.lua)
 	trailDots = true,
 	openmapDots = true, -- the trail on OpenMap's stitched map (Nav/Pins.lua; OpenMap's menu switch)
-	tomtom = true,
-	useTomTomArrow = false,
 	blizzardWaypoint = false,
 	arrivalSound = true,
 	-- How distances read: "yards" (the game's unit) or "metres" (ns.FormatDistance).
@@ -678,29 +676,15 @@ end)
 -- While Shortest Path Forever guides (Nav/Handoff.lua: handed off, or a
 -- journey of its own runs), a command that would show Polestar's own arrow
 -- or route says so in one line instead. True if it did.
-function Nav.SayHandedOff()
-	if not (Nav.HandedOff and Nav.HandedOff()) then return false end
-	local H = Nav.handoff
-	if H and H.Yielding and H.Yielding() then
-		ns.Print(L["Shortest Path Forever is guiding a journey of its own. Polestar's arrow comes back when it ends."])
-	else
-		ns.Print(L["Shortest Path Forever is guiding. Turn off \"Hand guiding to Shortest Path Forever\" (Options, Integrations) to use Polestar's arrow."])
-	end
-	return true
-end
+-- Slim build: no hand-off to Shortest Path Forever, no TomTom bridge.
+function Nav.HandedOff() return false end
+function Nav.UsingTomTomArrow() return false end
+function Nav.TomTomArrowGuides() return false end
+function Nav.SayHandedOff() return false end
 
 -- An option with no effect while Shortest Path Forever guides: greyed out
 -- then (with any `disabled` it had), its help saying why. Returns `c`.
-function Nav.HandoffOption(c)
-	local was = c.disabled
-	c.disabled = function()
-		if Nav.HandedOff and Nav.HandedOff() then return true end
-		return was ~= nil and was() or false
-	end
-	local why = L["Greyed out while Shortest Path Forever guides: it does this itself."]
-	c.help = c.help and (c.help .. " " .. why) or why
-	return c
-end
+function Nav.HandoffOption(c) return c end
 
 -- Whether hiding the guide window (ui.shown) hides the arrow now: only with
 -- nav.hideArrowWithGuide on, and never while the arrow is held (Nav.Hold: the

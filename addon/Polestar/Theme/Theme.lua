@@ -1734,9 +1734,7 @@ local function onSkin(primitives)
 	Theme.Refresh()
 end
 
-if EllesmereUI and EllesmereUI.RegisterSkin then
-	pcall(EllesmereUI.RegisterSkin, ADDON, onSkin)
-end
+-- Slim build: EllesmereUI's skinning API is not used.
 
 -- Keep the shadow and border crisp when the pixel grid moves.
 if ns.RegisterEvent then

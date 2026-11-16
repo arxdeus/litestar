@@ -1149,6 +1149,216 @@ function Buttons.TargetMacro(list, preferred, mark, ping)
 	return text
 end
 
+-- list, verbs, ids, marks: the names and what Buttons.TargetNames says of
+-- each (copies); namesSig: the names alone, for the chat note.
+local target = { list = {}, verbs = {}, ids = {}, marks = {}, sig = nil, namesSig = "", cycle = 1 }
+
+-- The mark and ping the target button's name i (default: the one the next
+-- click tries first) takes: "npc" for an NPC goal's name, else "mob".
+local function targetKind(i)
+	return NPC_VERBS[target.verbs[i or target.cycle]] and "npc" or "mob"
+end
+
+-- Names seen in the world (the target, the mouseover, a nameplate) as an
+-- elite, rare or boss this session, and the faces of the names seen: one
+-- texture per name on the target button, SetPortraitTexture'd once, laid
+-- over the icon or a small icon while that name shows (at most
+-- PORTRAIT_CAP; the oldest is drawn over for a new one).
+local seenSpecial, portraits, portraitOrder = {}, {}, {}
+local ELITE_CLASS = { elite = true, rareelite = true, rare = true, worldboss = true }
+
+local function codexSpecial(id)
+	local C = ns.Codex
+	if not (id and C and C.IsLoaded and C.IsLoaded() and C.Npc) then return false end
+	local n = C.Npc(id)
+	return n ~= nil and (n.elite or n.rare or n.boss) and true or false
+end
+
+-- What the button shows for a name: glyph (Media/UI), colour token, and
+-- whether its face may stand in for the glyph. An NPC goal's verb in
+-- success (friendly); an elite, rare or boss (the guide's data, the Codex
+-- when loaded, or seen so this session) the skull in quest gold, with its
+-- face; any other mob its verb in danger (hostile).
+function Buttons.TargetLook(verb, name, id, special)
+	if NPC_VERBS[verb] then return VERB_ICON[verb], "success", true end
+	if special or (name and seenSpecial[name]) or codexSpecial(id) then return "icon-elite", "quest", true end
+	return VERB_ICON[verb] or "icon-kill", "danger", false
+end
+
+-- The face kept for name, or nil.
+function Buttons.Portrait(name)
+	return name and portraits[name] or nil
+end
+
+local function portraitFor(b, name)
+	local tex = portraits[name]
+	if tex then return tex end
+	if #portraitOrder >= PORTRAIT_CAP then
+		local old = table.remove(portraitOrder, 1)
+		tex = portraits[old]
+		portraits[old] = nil
+	else
+		tex = b:CreateTexture(nil, "ARTWORK", nil, 1)
+	end
+	tex:Hide()
+	portraits[name] = tex
+	portraitOrder[#portraitOrder + 1] = name
+	return tex
+end
+
+-- Repaint the target button from what its macro does now (b.aList at
+-- b.aCycle): plain textures and text, so at any time, in combat too.
+-- Without qol.targetPlate: the crosshair and the name in textDim.
+local function paintTarget(b)
+	local list, cycle = b.aList, b.aCycle or 1
+	local n = list and #list or 0
+	local name = list and list[cycle]
+	b.Label:SetText(name or "")
+	for _, tex in pairs(portraits) do tex:Hide() end
+	local shown = 0
+	local T = Theme()
+	if not (name and QoL.On("targetPlate")) then
+		b.Icon:SetTexture(media("qol-target"))
+		color(b.Icon, "danger")
+		b.Icon:Show()
+		b.Badge:Hide()
+		font(b.Label, "small")
+		color(b.Label, "textDim")
+		if T and T.SetOutline then T.SetOutline(b.Label, false) end
+	else
+		local glyph, tone, face = Buttons.TargetLook(b.aVerbs[cycle], name, b.aIds[cycle], b.aMarks[cycle])
+		local tex = face and portraits[name]
+		if tex then
+			tex:ClearAllPoints()
+			tex:SetAllPoints(b.Icon)
+			tex:Show()
+			b.Icon:Hide()
+			b.Badge:SetTexture(media(glyph))
+			color(b.Badge, tone)
+			b.Badge:Show()
+		else
+			b.Icon:SetTexture(media(glyph))
+			color(b.Icon, tone)
+			b.Icon:Show()
+			b.Badge:Hide()
+		end
+		-- On the game world: the label size, outlined like the transparent window.
+		font(b.Label, "label")
+		color(b.Label, tone)
+		if T and T.SetOutline then T.SetOutline(b.Label, true) end
+		for k = 1, math.min(n - 1, #b.Minis) do
+			local j = (cycle - 1 + k) % n + 1
+			local m = b.Minis[k]
+			local g2, t2, face2 = Buttons.TargetLook(b.aVerbs[j], list[j], b.aIds[j], b.aMarks[j])
+			local tex2 = face2 and portraits[list[j]]
+			m:SetTexture(media(g2))
+			color(m, t2)
+			if tex2 then
+				tex2:ClearAllPoints()
+				tex2:SetAllPoints(m)
+				tex2:Show()
+				m:Hide()
+			else
+				m:Show()
+			end
+			shown = k
+		end
+	end
+	for k = shown + 1, #b.Minis do b.Minis[k]:Hide() end
+	b.miniCount = shown
+	placeLabel(b)
+end
+
+local function applyTarget(b)
+	QoL.Secure("target", function()
+		local list = target.list
+		-- A mob is pinged for the group; an NPC goal's NPC stays where it is.
+		local kind = targetKind()
+		local text = Buttons.TargetMacro(list, target.cycle, Buttons.MarkLine(kind), kind == "mob" and Buttons.QuestPingLine() or nil)
+		b:SetAttribute("type", text and "macro" or nil)
+		b:SetAttribute("macrotext", text)
+		b.applied = list[target.cycle]
+		b.aList, b.aVerbs, b.aIds, b.aMarks, b.aCycle = list, target.verbs, target.ids, target.marks, target.cycle
+		paintTarget(b)
+		if text then b:Show() else b:Hide() end
+	end)
+end
+
+-- A unit in the world (the target, the mouseover, a nameplate) named like
+-- one of the target button's names (the new ones, or the ones it shows
+-- while combat holds its macro): its classification marks an elite, rare
+-- or boss, and its face is kept for that name. A secret value (Forever
+-- hides units in combat) reads as unknown and is passed over.
+local function listed(list, name)
+	for i = 1, list and #list or 0 do
+		if list[i] == name then return true end
+	end
+	return false
+end
+
+local function seeUnit(unit)
+	local b = Buttons.target
+	if not (b and (target.list[1] or (b.aList and b.aList[1])) and QoL.On("targetPlate")) then return end
+	local C = ns.Compat
+	if not C.Readable(UnitExists and UnitExists(unit)) or C.Readable(UnitIsPlayer and UnitIsPlayer(unit)) ~= false then return end
+	local name = C.Readable(UnitName and UnitName(unit))
+	if not name or not (listed(target.list, name) or listed(b.aList, name)) then return end
+	local changed = false
+	local class = UnitClassification and C.Readable(UnitClassification(unit))
+	if class and ELITE_CLASS[class] and not seenSpecial[name] then
+		seenSpecial[name], changed = true, true
+	end
+	if not portraits[name] and SetPortraitTexture then
+		SetPortraitTexture(portraitFor(b, name), unit)
+		changed = true
+	end
+	if changed then paintTarget(b) end
+end
+Buttons.SeeUnit = seeUnit
+
+-- The units there are now: a new list's names may already be in sight.
+local function seeAll()
+	seeUnit("target")
+	seeUnit("mouseover")
+	local NP = C_NamePlate
+	local plates = NP and NP.GetNamePlates and NP.GetNamePlates()
+	for i = 1, plates and #plates or 0 do
+		local unit = plates[i].namePlateUnitToken or (plates[i].UnitFrame and plates[i].UnitFrame.unit)
+		if type(unit) == "string" then seeUnit(unit) end
+	end
+end
+
+ns.RegisterEvent("PLAYER_TARGET_CHANGED", function() seeUnit("target") end)
+ns.RegisterEvent("UPDATE_MOUSEOVER_UNIT", function() seeUnit("mouseover") end)
+ns.RegisterEvent("NAME_PLATE_UNIT_ADDED", function(_, unit) if type(unit) == "string" then seeUnit(unit) end end)
+
+local function targetTooltip(b, tip)
+	tip:SetText(L["Target"])
+	local T = Theme()
+	local plate = QoL.On("targetPlate")
+	for i = 1, #target.list do
+		local r, g, bl = 1, 1, 1
+		if plate and T and T.Color then
+			local _, tone = Buttons.TargetLook(target.verbs[i], target.list[i], target.ids[i], target.marks[i])
+			r, g, bl = T.Color(tone)
+		end
+		tip:AddLine(target.list[i], r, g, bl)
+	end
+	if QoL.On("markTarget") and target.list[1] then
+		local right, icon = Buttons.MarkRight(), markSetting(targetKind())
+		icon = icon == "cycle" and L["a new icon each press"]
+			or ("|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_" .. icon .. ":0|t " .. (_G["RAID_TARGET_" .. icon] or icon))
+		if right == "set" then
+			tip:AddLine(string.format(L["Marks it with %s."], icon), 0.6, 0.6, 0.6, true)
+		elseif right == "free" then
+			tip:AddLine(string.format(L["Marks it with %s if it has no icon yet: you don't lead the party."], icon), 0.6, 0.6, 0.6, true)
+		else
+			tip:AddLine(L["Marks nothing: in a raid only the leader and assistants set icons."], 0.6, 0.6, 0.6, true)
+		end
+	end
+	tip:AddLine(ns.Get("ui.lockHud") and L["Click again for the next name. Shift-drag to move."]
+		or L["Click again for the next name. Drag to move."], 0.6, 0.6, 0.6)
+end
 
 ---------------------------------------------------------------------------
 -- Bag button (QoL/Space.lua)

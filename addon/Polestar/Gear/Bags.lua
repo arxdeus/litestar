@@ -60,7 +60,6 @@ local WIDGET = "polestar_upgrade" -- Baganator corner widget id
 -- it while Pawn is installed and enabled. None while Polestar is hidden.
 function Bags.IsOn()
 	if ns.Hidden() or not (Gear.IsEnabled() and ns.Get("gear.bagArrows")) then return false end
-	if ns.Get("gear.hideForPawn") and ns.Compat.AddOnPresent("Pawn") then return false end
 	return true
 end
 
@@ -148,124 +147,12 @@ hookBags()
 ns.OnLogin(hookBags)
 
 ---------------------------------------------------------------------------
--- Baganator
----------------------------------------------------------------------------
-
-local baganator = false
-
-local function baganatorAPI()
-	local B = _G.Baganator
-	local API = type(B) == "table" and B.API
-	if type(API) == "table" and API.RegisterCornerWidget then return API end
-	return nil
-end
-
-local function registerBaganator()
-	if baganator then return true end
-	local API = baganatorAPI()
-	if not API then return false end
-	baganator = true
-	API.RegisterCornerWidget(L["Polestar"], WIDGET, function(_, details)
-		return Bags.IsUpgrade(type(details) == "table" and details.itemLink or nil)
-	end, function(button)
-		local t = button:CreateTexture(nil, "OVERLAY")
-		t:SetSize(BADGE, BADGE)
-		t:SetTexture(media())
-		paint(t)
-		widgets[t] = true
-		return t
-	end, { corner = "top_left", priority = 1 })
-	return true
-end
-
-local function onAddonLoaded(_, name)
-	if name == "Baganator" and registerBaganator() then
-		ns.UnregisterEvent("ADDON_LOADED", onAddonLoaded)
-	end
-end
-
-if not registerBaganator() then ns.RegisterEvent("ADDON_LOADED", onAddonLoaded) end
-
----------------------------------------------------------------------------
--- EllesmereUI Bags
----------------------------------------------------------------------------
-
-local ELLESMERE = "Polestar" -- the painter's name in EUI_Bags.itemOverlayIcons
-local ellesmere = false
-local marks = setmetatable({}, { __mode = "k" }) -- item button -> arrow texture
-local painted = setmetatable({}, { __mode = "k" }) -- item button -> link it last painted (false: none)
-
-local function ellesmereAPI()
-	local B = _G.EUI_Bags
-	if type(B) == "table" and type(B.RegisterItemOverlayIcon) == "function" then return B end
-	return nil
-end
-
--- One slot's arrow from its link. EllesmereUI Bags reruns the painters each
--- time it fills a button, so the link last painted is the button's item.
-local function markEllesmere(button, link)
-	local t = marks[button]
-	if link and Bags.IsUpgrade(link) then
-		if not t then
-			local host = button._textOverlay or button
-			t = host:CreateTexture(nil, "OVERLAY", nil, LAYER)
-			t:SetSize(BADGE, BADGE)
-			t:SetPoint("BOTTOMLEFT", host, "BOTTOMLEFT", 0, 0)
-			t:SetTexture(media())
-			paint(t)
-			marks[button] = t
-		end
-		t:Show()
-	elseif t then
-		t:Hide()
-	end
-end
-
--- data = { bag, slot, info, itemLink }, valid during the call only.
-local function paintEllesmere(button, data)
-	local link
-	if type(data) == "table" then
-		link = data.itemLink
-		if not link and data.bag and data.slot and data.slot > 0 then link = Gear.Client.BagLink(data.bag, data.slot) end
-	end
-	painted[button] = link or false
-	markEllesmere(button, link)
-end
-
-local function registerEllesmere()
-	if ellesmere then return true end
-	local B = ellesmereAPI()
-	if not B then return false end
-	ellesmere = true
-	B.RegisterItemOverlayIcon(ELLESMERE, paintEllesmere)
-	return true
-end
-
-local function onEllesmereLoaded(_, name)
-	if name == "EllesmereUIBags" and registerEllesmere() then
-		ns.UnregisterEvent("ADDON_LOADED", onEllesmereLoaded)
-	end
-end
-
-if not registerEllesmere() then ns.RegisterEvent("ADDON_LOADED", onEllesmereLoaded) end
-
----------------------------------------------------------------------------
 -- Keeping the arrows fresh
 ---------------------------------------------------------------------------
 
 function Bags.Redraw()
 	for _, f in ipairs(containerFrames()) do
 		if hooked[f] and f:IsShown() then onUpdateItems(f) end
-	end
-	-- EllesmereUI Bags: re-mark the shown slots from the links they last
-	-- painted (bags and bank alike), without making it rebuild its window.
-	for button, link in pairs(painted) do
-		if button:IsVisible() then markEllesmere(button, link or nil) end
-	end
-	local API = baganator and baganatorAPI()
-	if API and API.RequestItemButtonsRefresh and (not API.IsCornerWidgetActive or API.IsCornerWidgetActive(WIDGET)) then
-		local reasons = Baganator.Constants and Baganator.Constants.RefreshReason
-		API.RequestItemButtonsRefresh(reasons and reasons.ItemWidgets and { reasons.ItemWidgets } or nil)
 	end
 end
 
