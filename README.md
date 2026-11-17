@@ -30,8 +30,8 @@ overlays, the integrations, the target-name button.
 Needs Node 24 and a Lua 5.1 (`luajit` or `lua5.1`) for the checks.
 
 ```sh
-node tools/litestar.js sync              # merge the latest Polestar release, take its data, build, check, install
-node tools/litestar.js sync v0.4.0.1     # a given release
+node tools/litestar.js sync              # the latest Polestar release's guides: check, commit, install
+node tools/litestar.js sync v0.4.0.2     # a given release
 node tools/litestar.js build --zip       # dist/Litestar/AddOns and dist/Litestar-<version>.zip
 node tools/litestar.js check             # load and walk every guide under the game stub
 node tools/litestar.js install           # copy the build into the game's AddOns folder
@@ -40,18 +40,24 @@ node tools/litestar.js i18n sync|check|todo   # the Russian interface strings
 
 ### How sync works
 
-The source tree stays Polestar's (`addon/Polestar*`), so a Polestar release
-merges into it. `sync`:
+`sync` takes **only the content** of a Polestar release, never its code:
+the guides, the Codex, the quest and item data, the walking maps and the
+Russian guide texts and names, from the release zip (checksum checked).
+Litestar's engine and interface stay as they are.
 
-1. fetches the release tag from https://github.com/fitzforge/polestar
-2. merges it; Litestar's cuts stay cut without asking. A line both sides
-   changed stops the sync with the list of files: fix them, `git commit`, then
-   `node tools/litestar.js sync <tag> --data-only`.
-3. replaces the data (guides, Codex, quest and item data, walking maps, the
-   Russian guide texts and names) with the release zip's, checksum checked
-4. adds the new interface strings to `addon/Polestar_ruRU/Interface.lua`
-   (shown in English until translated: `i18n todo` lists them)
-5. builds, checks, commits and installs
+1. downloads the release zip from https://github.com/fitzforge/polestar
+2. checks every guide pack's format against what Litestar's engine reads
+   (`Guides.FORMATS`). A release that needs a newer engine stops with
+   nothing changed.
+3. replaces the content folders
+4. loads and walks every leveling guide for both factions in English and
+   Russian; on a problem the content is put back
+5. commits and installs
+
+When Polestar changes its guide format (rare: 0.4.0 did), the engine must
+be brought up once: `node tools/litestar.js sync <tag> --engine` merges that
+release's code, keeps Litestar's cuts and stops on the lines both sides
+changed (fix them, `git commit`, then `sync <tag>`).
 
 Restart the game after an install: `/reload` does not load new files.
 

@@ -4,8 +4,10 @@ Litestar is a slim build of Polestar (https://github.com/fitzforge/polestar),
 a leveling guide addon for WoW: Forever. Read README.md first.
 
 - `addon/Polestar*` is Polestar's tree, trimmed. Keep it Polestar-named:
-  `tools/litestar/build.js` renames everything to Litestar when it builds, and
-  upstream releases merge into it (`node tools/litestar.js sync`).
+  `tools/litestar/build.js` renames everything to Litestar when it builds.
+  `node tools/litestar.js sync` takes only the content of Polestar releases;
+  `sync <tag> --engine` merges Polestar's code, only when a release's guides
+  need a newer engine (a new pack format).
 - Code changes go in `addon/Polestar/`. The data folders (`Polestar_Guides*`,
   `Polestar_Nav*`, `Polestar_ItemDB`, and the Codex/QuestDB, which git
   ignores) come from Polestar's release zip: never edit them, a sync replaces
