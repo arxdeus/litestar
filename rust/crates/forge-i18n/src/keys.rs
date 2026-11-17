@@ -81,8 +81,9 @@ pub fn keys_in_source(src: &str, file: &str) -> Result<Vec<(String, usize)>, Str
 /// Keys code looks up with a variable (L[c]): text that comes from data. Each list names where its
 /// values come from; a value added there is added here.
 pub const DATA_KEYS: &[(&str, &[&str])] = &[
-	// The guide format's categories (docs/GUIDE_FORMAT.md, `category`; UI/Picker.lua CATEGORIES, UI.Category).
-	("UI/Picker.lua", &["Leveling", "Class", "Professions", "Reputation", "Exploration", "Legacy", "Collectibles", "Miscellaneous"]),
+	// The guide format's categories (docs/GUIDE_FORMAT.md, `category`; UI.Category), shown through L[cat] in the
+	// slim build's guides window and menu folders (UI/GameUI.lua).
+	("UI/GameUI.lua", &["Leveling", "Class", "Professions", "Reputation", "Exploration", "Legacy", "Collectibles", "Miscellaneous"]),
 	// UI.RaceName: Forever's race files (forge-guide races.rs) as RACE_NAMES words them, where the client has
 	// no name for the race (Skyborne) or no C_CreatureInfo.GetRaceInfo; UI.ClassName when the client has no
 	// LOCALIZED_CLASS_NAMES_MALE.

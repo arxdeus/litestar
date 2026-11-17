@@ -91,6 +91,11 @@ local function folders()
 	return out
 end
 
+local GU = {}
+UI.GameUI = GU
+GU.load = load
+GU.folders = folders
+
 local function newTabWanted(opts)
 	return (opts and opts.newTab) or (IsShiftKeyDown and IsShiftKeyDown()) or false
 end
@@ -99,13 +104,17 @@ local function packTitle(r)
 	if r.official then return L["Polestar"] end
 	return r.title or r.id
 end
+GU.packTitle = packTitle
 
 -- The guide menu: the game's context menu, from the guide window's button
 -- (opts.anchor) or at the cursor. Suggested guides, then the open tabs, then
 -- every guide this character can follow by folder, then each community
 -- pack's guides, then Import and Community guides.
+-- The guides window (UI/GuidesWindow.lua) is the picker; this menu is kept
+-- for a client without the game's templates.
 function UI.ShowPicker(opts)
 	opts = opts or {}
+	if UI.ShowGuides and CreateScrollBoxListLinearView then return UI.ShowGuides("guides", { keepOpen = true }) end
 	if not (MenuUtil and MenuUtil.CreateContextMenu) then
 		ns.Print(L["Choose a guide"] .. ": /polestar guides")
 		return
@@ -297,6 +306,7 @@ ns.On("SHOW_COPY", function(title, text) UI.ShowCopy(title, text) end)
 -- abandons it through the game's own confirmation (Compat.AskAbandonQuest).
 local WHY = {}
 function UI.ShowQuestRoom(anchor)
+	if UI.ShowGuides and CreateScrollBoxListLinearView then return UI.ShowGuides("quests", { keepOpen = true }) end
 	local RP = ns.RoutePlan
 	local list = RP and RP.Unneeded and RP.Unneeded()
 	if list == nil then
@@ -527,7 +537,10 @@ function PACKS.StatusText(r)
 	return nil
 end
 
+function PACKS.List() return packs() end
+
 function UI.ShowPacks(anchor)
+	if UI.ShowGuides and CreateScrollBoxListLinearView then return UI.ShowGuides("packs", { keepOpen = true }) end
 	if not (MenuUtil and MenuUtil.CreateContextMenu) then return end
 	local G = ns.Guides
 	MenuUtil.CreateContextMenu(anchor or UIParent, function(_, root)

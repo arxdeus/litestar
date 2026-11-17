@@ -13,6 +13,7 @@
 	<Script file="GearPick.lua"/>
 	<Script file="LevelTip.lua"/>
 	<Script file="GameUI.lua"/>
+	<Script file="GuidesWindow.lua"/>
 	<Script file="Options.lua"/>
 	<Script file="BlizzardSettings.lua"/>
 </Ui>

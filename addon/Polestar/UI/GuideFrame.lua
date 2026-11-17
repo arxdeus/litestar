@@ -4250,8 +4250,8 @@ local function openMenu(button)
 	local clear = transparent()
 	local items = {
 		{ text = L["Choose guide"], icon = "guides", onClick = function() UI.ShowPicker({ anchor = button }) end },
-		{ text = L["Open in new tab"], icon = "plus", disabled = not (E and E.OpenTab), onClick = function() UI.ShowPicker({ newTab = true, anchor = button }) end },
 		{ text = L["Import a guide"], icon = "plus", onClick = function() if UI.ShowImport then UI.ShowImport() end end },
+		{ text = L["Community guides"], icon = "layers", onClick = function() UI.ShowPacks() end },
 		-- No step on screen (a finished guide): nothing to skip, as with the navigator's Skip.
 		{ text = L["Skip this step"], icon = "skip", disabled = not (hasGuide and E.GetStepIndex and E.GetStepIndex()), onClick = function() GF.SkipStep() end },
 		{ separator = true },
@@ -4263,7 +4263,7 @@ local function openMenu(button)
 	-- The quest log cleanup (UI/QuestRoom.lua), while it has quests to list.
 	local unneeded = ns.RoutePlan and ns.RoutePlan.Unneeded() or nil
 	if unneeded and #unneeded > 0 then
-		table.insert(items, 5, { text = L["Clean up quest log (%d)"]:format(#unneeded), icon = "cross", onClick = function() UI.ShowQuestRoom() end })
+		table.insert(items, 4, { text = L["Clean up quest log (%d)"]:format(#unneeded), icon = "cross", onClick = function() UI.ShowQuestRoom() end })
 	end
 	for _, it in ipairs({
 		{ text = L["Compact mode"], icon = "compact", checked = compact(), onClick = function() ns.Set("ui.compact", not compact()) end },
@@ -4613,8 +4613,7 @@ local function build()
 	GF.menuButton = nav.Menu
 	-- Choosing a guide, one click: the game's menu of guides (UI/GameUI.lua).
 	-- Kept under its old name: the row's layout anchors on nav.Lookup.
-	nav.Lookup = W.IconButton(nav, "guides", 24, L["Choose guide"], function(self) UI.ShowPicker({ anchor = self }) end)
-	nav.Lookup.psTipLines = { L["Shift-click: open in a new tab"] }
+	nav.Lookup = W.IconButton(nav, "guides", 24, L["Choose guide"], function() if UI.ShowGuides and CreateScrollBoxListLinearView then UI.ShowGuides("guides") else UI.ShowPicker() end end)
 	nav.Lookup:SetPoint("RIGHT", nav.Menu, "LEFT", 0, 0)
 	GF.guidesButton = nav.Lookup
 	-- Nearby services: left of the bug, right of Skip.

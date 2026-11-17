@@ -164,3 +164,57 @@ function stub.menuText()
 	if m then walk(m.root, 0) end
 	return out
 end
+
+-- The game's frame templates the guides window is made of (Blizzard_SharedXML):
+-- ButtonFrameTemplate (Inset, CloseButton, SetTitle), WowScrollBoxList with a
+-- linear view (every element gets a row at once: stub.rows(box)), the tab
+-- helpers, DataProvider. Enough to drive UI/GuidesWindow.lua in tests.
+local baseCreate = CreateFrame
+function CreateFrame(kind, name, parent, template, ...)
+	local f = baseCreate(kind, name, parent, template, ...)
+	if template == "ButtonFrameTemplate" then
+		f.Inset = baseCreate("Frame", nil, f)
+		f.CloseButton = baseCreate("Button", nil, f)
+		f.TitleText = f:CreateFontString()
+		function f:SetTitle(t) self.TitleText:SetText(t) end
+		function f:SetPortraitToAsset() end
+	elseif template == "WowScrollBoxList" then
+		f.frames = {}
+		function f:SetDataProvider(dp)
+			for _, row in ipairs(self.frames) do row:Hide() end
+			local list = {}
+			for i, data in ipairs(dp.list) do
+				local row = self.frames[i] or baseCreate(self.view.kind, nil, self)
+				self.frames[i] = row
+				row:Show()
+				self.view.init(row, data)
+				list[i] = row
+			end
+			self.shownRows = list
+		end
+		function f:ForEachFrame(fn) for _, row in ipairs(self.shownRows or {}) do fn(row) end end
+	elseif template == "UICheckButtonTemplate" then
+		f.Text = f:CreateFontString()
+	elseif template == "DropdownButton" or template == "WowStyle1DropdownTemplate" then
+		function f:SetupMenu(gen) self.generator = gen end
+		function f:GenerateMenu() end
+	end
+	return f
+end
+function CreateScrollBoxListLinearView()
+	local v = { kind = "Button" }
+	function v:SetElementExtentCalculator(fn) self.extent = fn end
+	function v:SetElementInitializer(kind, fn) self.kind, self.init = kind, fn end
+	return v
+end
+ScrollUtil = { InitScrollBoxListWithScrollBar = function(box, bar, view) box.view = view end }
+ScrollBoxConstants = { RetainScrollPosition = true }
+function CreateDataProvider(t) return { list = t or {} } end
+function PanelTemplates_SetTab(f, i) f.selectedTab = i end
+function PanelTemplates_SetNumTabs(f, n) f.numTabs = n end
+function PanelTemplates_TabResize() end
+function stub.rows(box)
+	local out = {}
+	for _, row in ipairs(box.shownRows or {}) do out[#out + 1] = row end
+	return out
+end
