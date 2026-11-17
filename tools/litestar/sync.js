@@ -71,6 +71,12 @@ const CUT = [
 	'addon/Polestar/Rares/', 'addon/Polestar/Talents/', 'addon/Polestar/Locales/',
 ];
 
+// Litestar's own files: in a conflict, Litestar's side wins without asking.
+// The Russian interface file keeps Litestar's lines; the release's
+// translations fill the keys still left to translate (step 4).
+const OURS = ['README.md', 'AGENTS.md', '.gitignore', '.gitattributes', 'package.json', 'addon/Polestar_ruRU/Interface.lua'];
+let upstreamRu = null;
+
 function kept(file) {
 	if (CUT.some((p) => file.startsWith(p))) return false;
 	return KEEP.some((p) => (p.endsWith('/') ? file.startsWith(p) : file === p));
@@ -116,6 +122,12 @@ function mergeCode(tag) {
 	// Unmerged paths: (stage info) decide those outside what Litestar keeps.
 	const unmerged = [...new Set(git(['diff', '--name-only', '--diff-filter=U']).split('\n').filter(Boolean))];
 	for (const f of unmerged) {
+		if (OURS.includes(f)) {
+			if (f === 'addon/Polestar_ruRU/Interface.lua') upstreamRu = gitOk(['show', `${tag}:${f}`]).stdout || null;
+			gitOk(['checkout', '--ours', '--', f]);
+			gitOk(['add', '--', f]);
+			continue;
+		}
 		if (!kept(f)) {
 			gitOk(['rm', '-q', '--cached', '--', f]);
 			fs.rmSync(path.join(ROOT, f), { force: true });
@@ -235,9 +247,9 @@ function main(args) {
 
 	step(4, 'Russian interface strings');
 	const i18n = require('./i18n');
-	const r = i18n.sync({ quiet: true });
+	const r = i18n.sync({ quiet: true, fill: upstreamRu ? i18n.translationsIn(upstreamRu) : {} });
 	const left = i18n.todo();
-	console.log(`    ${r.added.length} new, ${r.retired.length} retired; ${left.length} left to translate${left.length ? ' (node tools/litestar.js i18n todo)' : ''}`);
+	console.log(`    ${r.added.length} new (${r.filled.length} translated from the release), ${r.retired.length} retired; ${left.length} left to translate${left.length ? ' (node tools/litestar.js i18n todo)' : ''}`);
 
 	step(5, 'build and check');
 	require('./build').build(['--zip']);

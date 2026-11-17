@@ -23,10 +23,23 @@ const ROOT = path.join(__dirname, '..', '..');
 const CORE = path.join(ROOT, 'addon', 'Polestar');
 const FILE = path.join(ROOT, 'addon', 'Polestar_ruRU', 'Interface.lua');
 
-function sync({ quiet = false } = {}) {
+// { key: value } of every translated line in another copy of the file (the
+// release's, during a sync): fills the keys this one has left to translate.
+function translationsIn(text) {
+	const out = {};
+	try {
+		const doc = parseLocaleText(text, 'release');
+		for (const g of doc.groups) for (const l of g.lines) if (l.kind === 'entry' && l.value) out[l.key] = l.value;
+	} catch (e) {
+		// Not in the layout: nothing to take.
+	}
+	return out;
+}
+
+function sync({ quiet = false, fill = {} } = {}) {
 	const keys = extractKeys(CORE);
 	const text = fs.readFileSync(FILE, 'utf8');
-	const r = updateLocaleText({ text, file: path.relative(ROOT, FILE), keys });
+	const r = updateLocaleText({ text, file: path.relative(ROOT, FILE), keys, fill });
 	if (r.text !== text) fs.writeFileSync(FILE, r.text);
 	if (!quiet) console.log(`ruRU: ${r.added.length} keys added, ${r.retired.length} retired, ${r.dropped.length} dropped`);
 	return r;
@@ -62,4 +75,4 @@ function main(args) {
 	else throw new Error(`i18n: unknown command ${cmd} (sync, check, todo)`);
 }
 
-module.exports = { sync, check, todo, main, FILE };
+module.exports = { sync, check, todo, main, translationsIn, FILE };
