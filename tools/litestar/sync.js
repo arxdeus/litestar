@@ -224,6 +224,7 @@ function main(args) {
 				console.log('      git add <files> && git commit --no-edit');
 				console.log(`      node tools/litestar.js sync ${tag} --data-only`);
 				for (const f of left) console.log(`      ${f}`);
+				console.log('    or cancel the merge: git merge --abort');
 				process.exitCode = 2;
 				return false;
 			}
