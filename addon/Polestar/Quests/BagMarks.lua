@@ -6,15 +6,15 @@
 -- So does a guide that has gone past every step for a quest you never accepted:
 -- nothing ahead needs the item, and the mark clears.
 --
--- Three bag views (qol.questBagMarks, which hides only the marks: the sale,
+-- Four bag views (qol.questBagMarks, which hides only the marks: the sale,
 -- delete and buyback guards ask Q.IsItemNeeded whatever it says), the way
 -- Gear/Bags.lua draws its arrows: the client's bags, where each container
 -- frame's UpdateItems is
 -- post-hooked on the frame itself (ContainerFrameMixin's functions are copied
 -- onto each frame as it is made) and the mark is a texture on the item
 -- button, top-right, kept here by button, nothing written into the button's
--- table; Baganator, as a corner widget; and EllesmereUI Bags, as an item
--- overlay painter.
+-- table; Baganator and BagSmith, as corner widgets; and EllesmereUI Bags,
+-- as an item overlay painter.
 
 local ADDON, ns = ...
 
@@ -100,7 +100,7 @@ local function hookBags()
 end
 
 ---------------------------------------------------------------------------
--- Baganator and EllesmereUI Bags (as Gear/Bags.lua draws its arrows there)
+-- Bag addons (as Gear/Bags.lua draws its arrows there)
 ---------------------------------------------------------------------------
 
 local function needed(link)
@@ -108,11 +108,127 @@ local function needed(link)
 	return id and Q.IsItemNeeded(id) or false
 end
 
+-- Baganator and BagSmith: a corner widget, top-right, placed by the addon.
+local WIDGET = "polestar_quest_needed"
+local registeredBags = {}
+
+local function cornerAPI(name)
+	local B = _G[name]
+	local API = type(B) == "table" and B.API
+	if type(API) == "table" and API.RegisterCornerWidget then return API end
+	return nil
+end
+
+local function registerBag(name)
+	if registeredBags[name] then return true end
+	local API = cornerAPI(name)
+	if not API then return false end
+	registeredBags[name] = true
+	local options = name == "BagSmith" and { listRows = true } or nil
+	API.RegisterCornerWidget(ns.L["Polestar quest items"], WIDGET, function(_, details)
+		return isOn() and needed(type(details) == "table" and details.itemLink or nil)
+	end, function(button)
+		local t = button:CreateTexture(nil, "OVERLAY")
+		t:SetSize(SIZE, SIZE)
+		t:SetTexture(ICON)
+		return t
+	end, { corner = "top_right", priority = 1 }, nil, options)
+	return true
+end
+
+local function onAddonLoaded(_, name)
+	if name ~= "Baganator" and name ~= "BagSmith" then return end
+	registerBag(name)
+	if registeredBags.Baganator and registeredBags.BagSmith then
+		ns.UnregisterEvent("ADDON_LOADED", onAddonLoaded)
+	end
+end
+
+registerBag("Baganator")
+registerBag("BagSmith")
+if not (registeredBags.Baganator and registeredBags.BagSmith) then ns.RegisterEvent("ADDON_LOADED", onAddonLoaded) end
+
+-- EllesmereUI Bags replaces the client's bag frames and runs the painters
+-- registered with EUI_Bags.RegisterItemOverlayIcon(name, fn(button, data)) on
+-- every slot it paints. The mark sits on the button's _textOverlay, top-right.
+local ELLESMERE = "PolestarQuestItems"
+local ellesmere = false
+local eMarks = setmetatable({}, { __mode = "k" }) -- item button -> texture
+local painted = setmetatable({}, { __mode = "k" }) -- item button -> link it last painted (false: none)
+
+local function ellesmereAPI()
+	local B = _G.EUI_Bags
+	if type(B) == "table" and type(B.RegisterItemOverlayIcon) == "function" then return B end
+	return nil
+end
+
+local function markEllesmere(button, link)
+	local t = eMarks[button]
+	if link and isOn() and needed(link) then
+		if not t then
+			local host = button._textOverlay or button
+			t = host:CreateTexture(nil, "OVERLAY", nil, 3)
+			t:SetSize(SIZE, SIZE)
+			t:SetPoint("TOPRIGHT", host, "TOPRIGHT", 0, 0)
+			t:SetTexture(ICON)
+			eMarks[button] = t
+		end
+		t:Show()
+	elseif t then
+		t:Hide()
+	end
+end
+
+-- data = { bag, slot, info, itemLink }, valid during the call only.
+local function paintEllesmere(button, data)
+	local link
+	if type(data) == "table" then
+		link = data.itemLink
+		if not link and data.bag and data.slot and data.slot > 0 and C_Container and C_Container.GetContainerItemLink then
+			link = C_Container.GetContainerItemLink(data.bag, data.slot)
+		end
+	end
+	painted[button] = link or false
+	markEllesmere(button, link)
+end
+
+local function registerEllesmere()
+	if ellesmere then return true end
+	local B = ellesmereAPI()
+	if not B then return false end
+	ellesmere = true
+	B.RegisterItemOverlayIcon(ELLESMERE, paintEllesmere)
+	return true
+end
+
+local function onEllesmereLoaded(_, name)
+	if name == "EllesmereUIBags" and registerEllesmere() then
+		ns.UnregisterEvent("ADDON_LOADED", onEllesmereLoaded)
+	end
+end
+
+if not registerEllesmere() then ns.RegisterEvent("ADDON_LOADED", onEllesmereLoaded) end
+
 -- Repaints the shown bags now.
 function Q.RedrawBagMarks()
 	hookBags()
 	for _, f in ipairs(containerFrames()) do
 		if hooked[f] and f:IsShown() then onUpdateItems(f) end
+	end
+	for button, link in pairs(painted) do
+		if button:IsVisible() then markEllesmere(button, link or nil) end
+	end
+	for name in pairs(registeredBags) do
+		local API = cornerAPI(name)
+		if API and API.RequestItemButtonsRefresh and (not API.IsCornerWidgetActive or API.IsCornerWidgetActive(WIDGET)) then
+			local B = _G[name]
+			local reasons = name == "Baganator" and B.Constants and B.Constants.RefreshReason
+			if name == "BagSmith" then
+				API.RequestItemButtonsRefresh()
+			else
+				API.RequestItemButtonsRefresh(reasons and reasons.ItemWidgets and { reasons.ItemWidgets } or nil)
+			end
+		end
 	end
 end
 

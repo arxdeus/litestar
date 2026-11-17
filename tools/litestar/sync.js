@@ -55,7 +55,7 @@ const OWN_IN_LANGUAGE = ['Interface.lua'];
 // removed again: the toolchain, the site, the docs, the other languages and
 // the cut features live in Polestar). Paths are prefixes.
 const KEEP = [
-	'addon/Polestar/', 'addon/Polestar_ruRU/',
+	'addon/Polestar/', 'addon/Polestar_Looks/', 'addon/Polestar_ruRU/',
 	...DATA.filter((d) => !['Polestar_Codex', 'Polestar_QuestDB'].includes(d)).map((d) => `addon/${d}/`),
 	'tools/litestar.js', 'tools/litestar/',
 	'data/codex/attunements.json', // the attunement notes' keys (tools/lib/i18n/keys.js)

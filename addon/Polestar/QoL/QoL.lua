@@ -1,6 +1,6 @@
 -- Quality of Life: the questing helpers players expect from a leveling addon,
 -- each behind a "qol.*" setting on the Questing or Quality of Life options
--- page (QoL/Options.lua).
+-- page (their rows: Polestar_Options/QoL/Options.lua).
 -- This file holds what the features share: settings, the out-of-combat queue
 -- for secure frames, the current step's goals, and the client calls Compat
 -- does not cover (bags, items, XP, money). Every client function used here
@@ -34,9 +34,11 @@ local defaults = {
 	targetButton = false,    -- slim build: the target button with the next name is gone (QoL.On reads it fixed)
 	targetPlate = true,      -- ... its icon shows the action, its name in the target's colour, the next names as small icons
 	targetAnnounce = false,  -- ... a chat line when its names change
+	targetRows = 5,          -- how many names the target list shows (1-8)
+	targetSimple = false,    -- the target button alone, cycling, without its list of names
 	guideNameTarget = false, -- opt in: extend navigation clicks to targeting, with shared marking settings
 	hearthButton = true,     -- Hearthstone button while a hearth goal is active
-	markTarget = false,      -- raid icon on what the target button, step key and objective clicks target
+	markTarget = true,       -- raid icon on what the target button, step key and objective clicks target
 	pingTarget = false,      -- /ping the mob the target button and step key target (QoL/Buttons.lua)
 	markMob = "8",           -- its icon on mobs (1-8, "cycle"): skull
 	markNpc = "1",           -- and on NPCs: star
@@ -46,6 +48,15 @@ local defaults = {
 	xpTracker = true,
 	xpTargetMark = true,     -- the guide's level target on the game's XP bar
 	boostedRest = true,      -- Boosted Rest and the sleeping bag on the XP line, the party's in the party panel
+	sellJunk = true,
+	autoRepair = true,
+	repairGuild = false,     -- guild bank first when the rank allows
+	buyGoals = false,        -- buy what the step's buy goals still need
+	restock = true,          -- the merchant's Restock button, for the amounts set per character
+	itemMarks = true,        -- junk and keep marks: Ctrl+Alt-click and the two mark keys (QoL/Marks.lua)
+	itemMarksClick = true,   -- ... Ctrl+Alt-click cycles the marks (off: only the keys mark)
+	bagSpace = true,         -- free bag slots: the junk button and the bags-full banner
+	bagsLow = 2,             -- ... at this many free slots or fewer
 	rewardHighlight = true,
 	flightHighlight = true,
 	deathHelper = true,
@@ -59,7 +70,7 @@ ns.RegisterDefaults("qol", defaults)
 local paths = {}
 -- Setting "qol.<key>" as a boolean.
 -- Slim build: settings that stay off whatever was saved.
-local FORCED_OFF = { targetButton = true, targetPlate = true, targetAnnounce = true }
+local FORCED_OFF = { targetButton = true, targetPlate = true, targetAnnounce = true, rareButton = true }
 function QoL.On(key)
 	if FORCED_OFF[key] then return false end
 	local p = paths[key]
@@ -184,7 +195,7 @@ function QoL.CurrentStep()
 	if not (E and E.GetStepIndex and E.GetStepView) then return nil end
 	local i = E.GetStepIndex()
 	if not i then return nil end
-	local view = E.GetStepView(i)
+	local view = E.GetStepView(i, true)
 	if not view then return nil end
 	local guide = E.GetGuide and E.GetGuide()
 	local step = guide and guide.steps and guide.steps[i]
@@ -197,17 +208,25 @@ function QoL.Open(goalView)
 	return s == "active" or s == "pending"
 end
 
--- Recompute fn once on the next frame after any number of calls.
+-- Recompute fn once on the next frame after any number of calls. The
+-- refresh runs from a timer of its own, with its errors caught and noted as
+-- ns.Safe does, but in the moment it finds (ns.Moment): the refreshes of one
+-- frame then share the step view the first of them builds (QoL.CurrentStep,
+-- Engine.GetStepView shared). Anything between them that changes what the
+-- view shows (a game event, a message, an Engine request, another timer of
+-- Polestar's) starts a new moment, and the next refresh builds a fresh one.
+-- A kill's burst asked for two views, one per refresh (#2555).
 function QoL.Coalesce(fn)
 	local scheduled = false
 	local function run()
 		scheduled = false
 		fn()
 	end
+	local function due() ns.SafeCall(run) end
 	return function()
 		if scheduled then return end
 		scheduled = true
-		if C_Timer and C_Timer.After then ns.After(0, run) else run() end
+		if C_Timer and C_Timer.After then C_Timer.After(0, due) else run() end
 	end
 end
 
@@ -385,13 +404,15 @@ function Client.Money()
 	return GetMoney and GetMoney() or 0
 end
 
--- "1g 23s 45c", zero parts left out.
+-- "1g 23s 45c", "5s 0c", "25c": from the largest coin on, in the coins'
+-- symbols (ns.CoinSymbols), the gold in thousands.
 function QoL.Money(copper)
 	copper = floor(copper or 0)
 	local g, s, c = floor(copper / 10000), floor(copper / 100) % 100, copper % 100
-	if g > 0 then return format("%dg %ds %dc", g, s, c) end
-	if s > 0 then return format("%ds %dc", s, c) end
-	return format("%dc", c)
+	local G, S, C = ns.CoinSymbols()
+	if g > 0 then return format("%s%s %d%s %d%s", ns.Thousands(g), G, s, S, c, C) end
+	if s > 0 then return format("%d%s %d%s", s, S, c, C) end
+	return format("%d%s", c, C)
 end
 
 -- "1h 05m", "12m", "40s"

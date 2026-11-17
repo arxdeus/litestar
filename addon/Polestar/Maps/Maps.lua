@@ -79,24 +79,41 @@ function Maps.FormatLevels(min, max)
 end
 
 ---------------------------------------------------------------------------
--- Options: the map features on the Map page (its sections are declared by
--- the options window, UI/Options.lua); the flight timer and the instance
--- tracker on the Quality of Life page (Travel and Trackers)
+---------------------------------------------------------------------------
+-- Draggable compact frames (flight timer, instance tracker)
 ---------------------------------------------------------------------------
 
-local MAP = L["Map"]
-
-local function register(spec)
-	if not ns.RegisterOptions then return end
-	local ok, err = ns.RegisterOptions(spec)
-	if not ok and err then ns.Debug(err) end
+-- A small panel on Polestar's layer over UIParent (Polestar.UIParent: it
+-- hides with Polestar); its position persists in setting `posKey`.
+function Maps.CompactFrame(name, posKey, defaultPoint, dx, dy)
+	local f = CreateFrame("Frame", name, ns.UIParent)
+	f:SetFrameStrata("MEDIUM")
+	f:SetClampedToScreen(true)
+	f:SetMovable(true)
+	f:EnableMouse(true)
+	-- A window, as the toasts are: the window skin (the Player's Frame Rule),
+	-- the game's looks giving it the guide window's light frame (#1390).
+	f.psLight = true
+	local T = ns.Theme
+	if T and T.Skin then T.Skin(f, "window") end
+	local function place()
+		f:ClearAllPoints()
+		local p = ns.Get(posKey)
+		if type(p) == "table" and type(p[1]) == "string" then
+			f:SetPoint(p[1], UIParent, p[1], p[2] or 0, p[3] or 0)
+		else
+			f:SetPoint(defaultPoint, UIParent, defaultPoint, dx, dy)
+		end
+	end
+	-- Dragged from the first pixel (ns.DragWindow); the spot saved on the drop.
+	ns.DragWindow(f, f, { locked = function() return ns.DragLocked() end, onStop = function(self)
+		local cx, cy = self:GetCenter()
+		local ux, uy = UIParent:GetCenter()
+		local s = self:GetEffectiveScale() / UIParent:GetEffectiveScale()
+		ns.Set(posKey, { "CENTER", floor(cx * s - ux + 0.5), floor(cy * s - uy + 0.5) })
+	end })
+	f.Place = place
+	place()
+	f:Hide()
+	return f
 end
-
--- Coordinates and the minimap button, also on Quality of Life > Map: one
--- setting, a fresh control per page (the registry keeps per-control state).
-local function minimapButton()
-	return { kind = "toggle", key = "maps.minimapButton", label = L["Minimap button"], search = "minimap icon, minimap button, hide button, launcher",
-		help = L["A Polestar button on the edge of the minimap. Click to hide or show Polestar, right-click for a menu, drag to move it."] }
-end
-
-register({ page = L["Quality of Life"], tab = L["Map"], section = L["Minimap"], controls = { minimapButton() } })

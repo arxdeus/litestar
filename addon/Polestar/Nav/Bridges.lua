@@ -9,6 +9,7 @@ local Bridges = {}
 Nav.bridges = Bridges
 
 local blizzardSet = false
+local blizzardAt      -- the game's pin we set: { uiMapID, x, y } (0-1)
 local wuiSet = false   -- a Waypoint UI pin of ours
 local wuiLast         -- the pin last set: label, map, x, y (an unchanged target is not sent again)
 local questSet         -- the quest we super-tracked
@@ -128,8 +129,23 @@ end
 
 local retrying = false
 
+-- Is the game's pin still the one we set (the same map and point)? Without
+-- C_Map.GetUserWaypoint to ask, it is taken to be.
+local function ourPin()
+	local get = C_Map and C_Map.GetUserWaypoint
+	if not get then return true end
+	local p, at = get(), blizzardAt
+	if not (p and at and p.uiMapID == at[1] and p.position) then return false end
+	local x, y = p.position.x, p.position.y
+	if p.position.GetXY then x, y = p.position:GetXY() end
+	return x ~= nil and y ~= nil and math.abs(x - at[2]) < 1e-4 and math.abs(y - at[3]) < 1e-4
+end
+
 local function syncBlizzard(target)
+	-- An addon following Polestar that sets the game's pin itself (Nav.API.Follow
+	-- with `pin`, as Naowh Forever's Waypoint Pin does) has it: ours steps aside.
 	local on = ns.Get("nav.blizzardWaypoint") and target and not Nav.HandedOff() and not ns.ArrowHidden()
+		and not (Nav.FollowerPins and Nav.FollowerPins())
 	local W = waypointUI()
 	-- Waypoint UI loads after Polestar and fills its API late: look again once
 	-- (the first target after login is set before it is ready).
@@ -148,7 +164,7 @@ local function syncBlizzard(target)
 		-- A named pin replaces a plain one of ours (Waypoint UI sets the game's
 		-- pin itself); a tracked quest does not, so ours is cleared (a target
 		-- set as a plain pin before Waypoint UI's API was ready).
-		if blizzardSet and shown == "quest" and C_Map and C_Map.ClearUserWaypoint then C_Map.ClearUserWaypoint() end
+		if blizzardSet and shown == "quest" and ourPin() and C_Map and C_Map.ClearUserWaypoint then C_Map.ClearUserWaypoint() end
 		blizzardSet = false
 		return
 	end
@@ -160,7 +176,7 @@ local function syncBlizzard(target)
 			local point = makePoint(map, x / 100, y / 100)
 			if point then
 				C_Map.SetUserWaypoint(point)
-				blizzardSet = true
+				blizzardSet, blizzardAt = true, { map, x / 100, y / 100 }
 				if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
 					C_SuperTrack.SetSuperTrackedUserWaypoint(true)
 				end
@@ -170,7 +186,12 @@ local function syncBlizzard(target)
 	end
 	if blizzardSet then
 		blizzardSet = false
-		if C_Map and C_Map.ClearUserWaypoint then C_Map.ClearUserWaypoint() end
+		-- Only our own pin goes, never one another addon or the player set over
+		-- it. Stepping aside for Shortest Path Forever (Nav.HandedOff) it stays:
+		-- its guide keeps the pin it found, to put back when its journey ends,
+		-- and reads that pin cleared under it as the player taking over: it
+		-- stopped guiding the moment Polestar handed it the target.
+		if not Nav.HandedOff() and ourPin() and C_Map and C_Map.ClearUserWaypoint then C_Map.ClearUserWaypoint() end
 	end
 end
 

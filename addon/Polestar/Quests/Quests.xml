@@ -9,5 +9,7 @@
 	<Script file="SellWarning.lua"/>
 	<Script file="QuestLevels.lua"/>
 	<Script file="Timed.lua"/>
+	<Script file="QuestLogLink.lua"/>
+	<Script file="AuctionBuys.lua"/>
 	<Script file="Options.lua"/>
 </Ui>

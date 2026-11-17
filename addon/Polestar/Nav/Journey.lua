@@ -167,6 +167,20 @@ local function planning()
 	return ns.Get("nav.mapPlan") and not Nav.HandedOff() and true or false
 end
 
+-- With Shortest Path Forever installed, its own Shift- and Alt-click plan a journey of its own (its
+-- Journey/JourneyInput.lua) whichever addon hears the click first: one click planned in both, and once its journey
+-- ended Polestar's arrow stayed on the clicked spot instead of going back to the guide. So with it installed, `fn`
+-- (Polestar's plan) waits a frame and is dropped when the click started a journey there (Nav/Handoff.lua
+-- ClickTaken); with its journeys off it plans nothing, and Polestar's plan goes ahead. -> true when it waits.
+local function leftToShortestPath(fn)
+	local H = Nav.handoff
+	if not (H and H.Available and H.Available()) then return false end
+	ns.After(0, function()
+		if not H.ClickTaken() then fn() end
+	end)
+	return true
+end
+
 -- Shift-click inserts links into an open chat box; that click stays Blizzard's.
 local function chatOpen()
 	local active = (ChatFrameUtil and ChatFrameUtil.GetActiveWindow) or ChatEdit_GetActiveWindow
@@ -209,6 +223,8 @@ local function onCanvasClick(canvas, button)
 	local mapID = canvas:GetMapID()
 	local x, y = canvas:GetNormalizedCursorPosition()
 	if not (mapID and x and y) then return false end
+	-- Left to Shortest Path Forever, the click goes on to its handler (and the map's own).
+	if leftToShortestPath(function() Journey.OnMapClick(mapID, x * 100, y * 100) end) then return false end
 	Journey.OnMapClick(mapID, x * 100, y * 100)
 	return true
 end
@@ -226,15 +242,21 @@ end
 
 -- Alt-click anywhere on the world map, its icons included. Observed through
 -- GLOBAL_MOUSE_DOWN, as icons swallow canvas clicks.
+local added = {} -- MapCanvas.Add's maps: alt-click and shift-click work there as on the world map
 local function onGlobalMouseDown(_, button)
 	if button ~= "LeftButton" or not planning() or not IsAltKeyDown() or IsShiftKeyDown() or IsControlKeyDown() then return end
-	local map = WorldMapFrame
-	if not (map and map:IsShown() and map.ScrollContainer and map.ScrollContainer:IsMouseOver()) then return end
+	local map
+	for i = 0, #added do
+		local m = i == 0 and WorldMapFrame or added[i]
+		if m and m:IsShown() and m.ScrollContainer and m.ScrollContainer:IsMouseOver() then map = m; break end
+	end
+	if not map then return end
 	local mapID = map:GetMapID()
 	local name, x, y = hoveredPin(map)
 	if name == "own" then return end
 	if not x then x, y = map:GetNormalizedCursorPosition() end
 	if not (mapID and x and y) then return end
+	if leftToShortestPath(function() Journey.OnMapClick(mapID, x * 100, y * 100, name) end) then return end
 	Journey.OnMapClick(mapID, x * 100, y * 100, name)
 end
 
@@ -244,7 +266,9 @@ local function onMinimapUp(_, button)
 	local P = ns.Pins
 	if not (P and P.MinimapCursor) then return end
 	local dNorth, dWest = P.MinimapCursor()
-	Journey.OnMinimapClick(dNorth, dWest, (P.MinimapView()))
+	local radius = P.MinimapView()
+	if leftToShortestPath(function() Journey.OnMinimapClick(dNorth, dWest, radius) end) then return end
+	Journey.OnMinimapClick(dNorth, dWest, radius)
 end
 
 local worldHooked, minimapHooked = false, false
@@ -270,6 +294,14 @@ ns.OnLogin(function()
 	hookMinimap()
 	ns.RegisterEvent("GLOBAL_MOUSE_DOWN", onGlobalMouseDown)
 	if ns.Pins and ns.Pins.OnWorldClick then ns.Pins.OnWorldClick(onOwnPinClick) end
+	ns.MapCanvas.OnAdd(function(map)
+		added[#added + 1] = map
+		-- Another addon's own map: its click handlers are no game table (the
+		-- gamepad check stays as on the world map).
+		if not ns.GamepadUI() and map.AddCanvasClickHandler and map.GetNormalizedCursorPosition then
+			map:AddCanvasClickHandler(onCanvasClick)
+		end
+	end)
 	if hookWorldMap() then return end
 	local function onLoaded(_, name)
 		if name == "Blizzard_WorldMap" and hookWorldMap() then ns.UnregisterEvent("ADDON_LOADED", onLoaded) end

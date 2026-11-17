@@ -2,6 +2,14 @@
 	<Script file="UI.lua"/>
 	<Script file="NameTargets.lua"/>
 	<Script file="GuideFrame.lua"/>
+	<Script file="GuideFrameTabs.lua"/>
+	<Script file="GuideFrameBanner.lua"/>
+	<Script file="GuideFrameHere.lua"/>
+	<Script file="GuideFrameLayout.lua"/>
+	<Script file="GuideFrameLook.lua"/>
+	<Script file="GuideFrameMenu.lua"/>
+	<Script file="GuideFrameWindow.lua"/>
+	<Script file="GuideFrameStatus.lua"/>
 	<Script file="StepList.lua"/>
 	<Script file="WhileHere.lua"/>
 	<Script file="ClassRewards.lua"/>
@@ -12,6 +20,9 @@
 	<Script file="JourneyPanel.lua"/>
 	<Script file="GearPick.lua"/>
 	<Script file="LevelTip.lua"/>
+	<Script file="Toasts.lua"/>
+	<Script file="Trackers.lua"/>
+	<Script file="Movers.lua"/>
 	<Script file="GameUI.lua"/>
 	<Script file="GuidesWindow.lua"/>
 	<Script file="Options.lua"/>
