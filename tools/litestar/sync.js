@@ -77,7 +77,8 @@ function kept(file) {
 }
 
 function git(args, opts = {}) {
-	return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: opts.stdio || ['ignore', 'pipe', 'pipe'], maxBuffer: 256 * 1024 * 1024 }).trim();
+	const out = execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: opts.stdio || ['ignore', 'pipe', 'pipe'], maxBuffer: 256 * 1024 * 1024 });
+	return (out || '').trim();
 }
 
 function gitOk(args) {
