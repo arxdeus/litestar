@@ -1,7 +1,0 @@
-## Interface: 16001
-## Title: Fixture PvP
-## Version: Fixture 1.0
-## LoadOnDemand: 1
-Locales\Locales.xml
-private.lua
-data.lua

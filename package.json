@@ -1,35 +1,17 @@
 {
-  "name": "polestar",
+  "name": "litestar",
   "version": "0.3.7.2",
   "private": true,
-  "description": "Leveling guides for World of Warcraft: Forever: the addon, its data pipeline and the authoring toolchain",
-  "bin": {
-    "polestar": "tools/polestar.js"
-  },
-  "keywords": [
-    "world-of-warcraft",
-    "wow-addon",
-    "wow-classic",
-    "leveling-guide",
-    "lua",
-    "route-simulator"
-  ],
-  "homepage": "https://github.com/fitzforge/polestar#readme",
-  "bugs": {
-    "url": "https://github.com/fitzforge/polestar/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fitzforge/polestar.git"
-  },
+  "description": "Litestar: a slim build of Polestar, the leveling guide addon for World of Warcraft: Forever",
   "license": "GPL-3.0-only",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
-    "test": "node --test --test-timeout=900000 \"tests/**/*.test.js\"",
-    "test:changed": "node tools/testsel.js --run",
-    "i18n:check": "cargo run --manifest-path rust/Cargo.toml --locked -q -p forge -- i18n check",
-    "i18n:status": "cargo run --manifest-path rust/Cargo.toml --locked -q -p forge -- i18n status"
+    "build": "node tools/litestar.js build --zip",
+    "check": "node tools/litestar.js check",
+    "sync": "node tools/litestar.js sync",
+    "install": "node tools/litestar.js install",
+    "i18n:check": "node tools/litestar.js i18n check"
   }
 }

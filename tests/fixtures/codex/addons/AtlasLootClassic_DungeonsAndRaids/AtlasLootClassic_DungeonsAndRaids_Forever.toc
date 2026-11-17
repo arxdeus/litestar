@@ -1,8 +1,0 @@
-## Interface: 16001
-## Title: Fixture dungeons
-## Version: Fixture 1.0
-## LoadOnDemand: 1
-Locales\Locales.xml
-data.lua
-data-tbc.lua
-droprate.lua

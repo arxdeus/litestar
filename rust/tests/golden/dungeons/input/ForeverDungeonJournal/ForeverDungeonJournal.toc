@@ -1,6 +1,0 @@
-## Interface: 16001
-## Title: DungeonJournal
-## Author: Fixture
-## Version: 0.0.1
-
-Data\Dungeons.lua

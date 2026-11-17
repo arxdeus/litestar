@@ -1,3 +1,0 @@
-pfDB["objects"]["deDE"] = {
-
-}

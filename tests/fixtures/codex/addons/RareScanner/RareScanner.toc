@@ -1,4 +1,0 @@
-## Interface: 16001
-## Title: Fixture rares
-## Version: 0.0.1.fixture
-Tables\Tables.xml
