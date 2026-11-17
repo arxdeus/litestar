@@ -1,0 +1,8 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+	<!-- Rows Polestar 0.4 moved to its settings addon (Polestar_Options); the
+	     slim registry (UI/Options.lua) filters them like the core's own. -->
+	<Script file="Nav.lua"/>
+	<Script file="Maps.lua"/>
+	<Script file="Dungeons.lua"/>
+	<Script file="Guide.lua"/>
+</Ui>

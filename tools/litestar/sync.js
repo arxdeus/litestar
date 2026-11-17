@@ -1,30 +1,31 @@
 'use strict';
-// Brings Litestar up to a Polestar release: its guides, its data and the fixes
-// to the code Litestar keeps.
+// Brings Litestar's guides up to a Polestar release: the content only, never
+// Polestar's code. Litestar's engine (addon/Polestar) stays as it is.
 //
-//   node tools/litestar.js sync [<tag>] [--data-only] [--no-install]
+//   node tools/litestar.js sync [<tag>] [--no-install] [--force]
+//   node tools/litestar.js sync <tag> --engine     (rare: also merge Polestar's code)
 //
-// <tag>: a Polestar release tag (v0.4.0.1); none: the latest release on
-// GitHub. Steps, each stopping with what to do when it can't go on:
+// <tag>: a Polestar release tag (v0.4.0.2); none: the latest release on GitHub.
 //
-//   1. fetch the tag from the `polestar` remote (added on first run:
-//      https://github.com/fitzforge/polestar)
-//   2. merge it into the current branch (the code). Litestar's cuts are kept
-//      without asking: a file Litestar deleted that the release changed stays
-//      deleted, a folder the release adds under a cut feature stays out
-//      (KEEP below says what Litestar ships). What is left in conflict (a
-//      line both changed) stops the sync: fix those files, `git commit`,
-//      then run sync again with --data-only.
-//   3. the release zip from GitHub (its SHA256SUMS checked): every data folder
-//      Litestar ships (DATA below) replaced by the release's, so the guides,
-//      the Codex, the quest and item data and the walking maps are exactly
-//      the ones that release's core reads
-//   4. the Russian interface file synced with the code (new strings listed:
-//      they show in English until translated)
-//   5. build, check (tools/litestar/check.js) and, unless --no-install,
-//      install into the game's AddOns folder (tools/litestar/install.js)
+//   1. the release zip from GitHub, its SHA256SUMS checked
+//   2. compatibility: every guide pack's format (X-Polestar-Format) must be one
+//      Litestar's engine reads (Guides.FORMATS in addon/Polestar/Core/
+//      Guides.lua), and the data addons' versions must be the release's; a
+//      newer format stops the sync with nothing changed (the guides would be
+//      refused in game): that release needs the engine (--engine) first
+//   3. the content replaced by the release's: the guides (Polestar_Guides*),
+//      the Codex, the quest and item data, the walking maps (Polestar_Nav*),
+//      the Russian guide texts and names (Polestar_ruRU's Texts.lua and
+//      Names.lua; its Interface.lua, the interface strings, is Litestar's)
+//   4. a check that the guides load and walk under the game stub for both
+//      factions and both languages (tools/litestar/check.js); on a problem
+//      nothing is committed or installed and the content is put back
+//   5. commit, and unless --no-install, install into the game
 //
-// --data-only skips 1-2: only the data of <tag> (for a merge already done).
+// --engine: before the content, merge the release's code into the current
+// branch (git merge of the tag); Litestar's cuts are kept without asking, what
+// both changed stops the sync with the list. For a release whose guides need
+// a newer engine. --force: take a newer format anyway (for testing).
 
 const fs = require('node:fs');
 const os = require('node:os');
@@ -205,13 +206,35 @@ function setCoreVersion(version) {
 	fs.writeFileSync(pkg, `${JSON.stringify(p, null, 2)}\n`);
 }
 
+// The pack formats Litestar's engine reads: Guides.FORMATS in Core/Guides.lua.
+function engineFormats() {
+	const src = fs.readFileSync(path.join(ROOT, 'addon', 'Polestar', 'Core', 'Guides.lua'), 'utf8');
+	const m = src.match(/^Guides\.FORMATS = \{([^}]*)\}/m);
+	if (!m) throw new Error('Core/Guides.lua: no Guides.FORMATS line');
+	return new Set([...m[1].matchAll(/\[(\d+)\]\s*=\s*true/g)].map((x) => Number(x[1])));
+}
+
+// Every pack in the release that Litestar ships: its format, and whether the engine reads it.
+function compatibility(unpacked) {
+	const formats = engineFormats();
+	const problems = [];
+	for (const name of [...DATA, LANGUAGE]) {
+		const toc = path.join(unpacked, name, `${name}.toc`);
+		if (!fs.existsSync(toc)) { problems.push(`${name}: not in the release`); continue; }
+		const t = fs.readFileSync(toc, 'utf8');
+		const f = t.match(/^## X-Polestar-Format: (\d+)/m);
+		if (f && !formats.has(Number(f[1]))) problems.push(`${name}: pack format ${f[1]}, the engine reads ${[...formats].sort((a, b) => a - b).join(', ')}`);
+	}
+	return problems;
+}
+
 function main(args) {
 	const flags = new Set(args.filter((a) => a.startsWith('--')));
 	const tag = args.find((a) => !a.startsWith('--')) || latestTag();
 	const version = tag.replace(/^v/, '');
 	console.log(`Litestar sync with Polestar ${tag}`);
 
-	if (!flags.has('--data-only')) {
+	if (flags.has('--engine')) {
 		step(1, `fetching ${tag}`);
 		fetchTag(tag);
 		if (merged(tag)) {
@@ -222,7 +245,7 @@ function main(args) {
 			if (left.length) {
 				console.log(`\n    ${left.length} file(s) changed by both Litestar and Polestar; resolve them, then:`);
 				console.log('      git add <files> && git commit --no-edit');
-				console.log(`      node tools/litestar.js sync ${tag} --data-only`);
+				console.log(`      node tools/litestar.js sync ${tag}`);
 				for (const f of left) console.log(`      ${f}`);
 				console.log('    or cancel the merge: git merge --abort');
 				process.exitCode = 2;
@@ -233,21 +256,35 @@ function main(args) {
 		}
 	}
 
-	step(3, `data from the ${tag} release`);
+	if (git(['status', '--porcelain', '--untracked-files=no', '--', 'addon'])) throw new Error('addon/ has uncommitted changes: commit or stash them first');
+	step(1, `the ${tag} release`);
 	const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'litestar-sync-'));
 	try {
 		const unpacked = download(tag, tmp);
 		const got = tocVersion(path.join(unpacked, 'Polestar_Guides'));
 		if (got !== version) throw new Error(`the release zip's guides say ${got}, not ${version}`);
+		step(2, 'compatibility');
+		const problems = compatibility(unpacked);
+		if (problems.length && !flags.has('--force')) {
+			for (const p of problems) console.log(`    ${p}`);
+			console.log(`\n    Polestar ${version}'s guides need a newer engine than Litestar's: nothing changed.`);
+			console.log(`    Update the engine first: node tools/litestar.js sync ${tag} --engine`);
+			process.exitCode = 3;
+			return false;
+		}
+		console.log('    every pack in a format the engine reads');
+		step(3, 'content');
 		replaceData(unpacked);
 		setCoreVersion(version);
-		console.log(`    ${DATA.length} data folders and ${LANGUAGE}'s texts replaced (${version})`);
+		console.log(`    ${DATA.length} content folders and ${LANGUAGE}'s guide texts replaced (${version})`);
 	} finally {
 		fs.rmSync(tmp, { recursive: true, force: true });
 	}
 
+	// New interface strings come only with the engine's code (--engine).
 	step(4, 'Russian interface strings');
 	const i18n = require('./i18n');
+	if (!upstreamRu && flags.has('--engine')) upstreamRu = gitOk(['show', `${tag}:addon/Polestar_ruRU/Interface.lua`]).stdout || null;
 	const r = i18n.sync({ quiet: true, fill: upstreamRu ? i18n.translationsIn(upstreamRu) : {} });
 	const left = i18n.todo();
 	console.log(`    ${r.added.length} new (${r.filled.length} translated from the release), ${r.retired.length} retired; ${left.length} left to translate${left.length ? ' (node tools/litestar.js i18n todo)' : ''}`);
@@ -256,18 +293,20 @@ function main(args) {
 	require('./build').build(['--zip']);
 	const ok = require('./check').main([]);
 	if (!ok) {
-		console.log('\n    the check found problems: nothing installed, nothing committed');
+		console.log('\n    the check found problems: the content is put back, nothing installed or committed');
+		git(['checkout', '--', 'addon', 'package.json']);
+		git(['clean', '-fdq', '--', 'addon']);
 		process.exitCode = 1;
 		return false;
 	}
 	const changes = git(['status', '--porcelain']);
 	if (changes) {
 		git(['add', '-A', 'addon', 'package.json']);
-		git(['commit', '-q', '-m', `Litestar: data of Polestar ${tag}`]);
+		git(['commit', '-q', '-m', `Litestar: guides of Polestar ${tag}`]);
 		console.log(`    committed: ${git(['log', '--oneline', '-1'])}`);
 	}
 	if (!flags.has('--no-install')) require('./install').main([]);
 	return true;
 }
 
-module.exports = { main, kept, KEEP, CUT, DATA };
+module.exports = { main, kept, compatibility, engineFormats, KEEP, CUT, DATA };

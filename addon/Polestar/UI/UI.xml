@@ -26,5 +26,6 @@
 	<Script file="GameUI.lua"/>
 	<Script file="GuidesWindow.lua"/>
 	<Script file="Options.lua"/>
+	<Include file="..\Options\Options.xml"/>
 	<Script file="BlizzardSettings.lua"/>
 </Ui>
