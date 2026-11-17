@@ -44,6 +44,8 @@ const TEXT_RULES = [
 	// and the like, and a second guide addon must not take them.
 	[/SLASH_POLESTAR1 = "\/polestar"/g, 'SLASH_LITESTAR1 = "/litestar"'],
 	[/SLASH_POLESTAR2 = "\/pole"/g, 'SLASH_LITESTAR2 = "/lite"'],
+	// Polestar 0.4's /ps stays Polestar's: Litestar takes only /litestar and /lite.
+	[/\n\tSLASH_POLESTAR3 = "\/ps"\n/g, '\n'],
 	[/SLASH_POLESTAR_RL1 = "\/rl"/g, 'SLASH_LITESTAR_RL1 = "/litestar-reload"'],
 	[/SLASH_POLESTARWAY1 = "\/way"/g, 'SLASH_LITESTARWAY1 = "/litestar-way"'],
 	[/\/polestar\b/g, '/litestar'],
