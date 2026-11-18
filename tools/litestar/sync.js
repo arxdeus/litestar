@@ -149,21 +149,48 @@ function mergeCode(tag) {
 	return [...new Set(git(['diff', '--name-only', '--diff-filter=U']).split('\n').filter(Boolean))];
 }
 
+// The release zip is kept in dist/cache/<tag>: a slow or broken connection
+// resumes where it stopped (curl -C -, with retries), and a zip already
+// downloaded and checked is not downloaded again.
+const CACHE = path.join(ROOT, 'dist', 'cache');
+
+function sha256(file) {
+	return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+}
+
+function fetchFile(url, file, tries = 30) {
+	for (let i = 1; i <= tries; i++) {
+		const c = spawnSync('curl', ['-fsSL', '-C', '-', '--retry', '5', '--retry-all-errors', '--speed-time', '60', '--speed-limit', '1000', '-o', file, url], { stdio: ['ignore', 'ignore', 'inherit'] });
+		if (c.status === 0) return;
+		// 33: the server can't resume (or the file is already whole): start over once.
+		if (c.status === 33 && fs.existsSync(file)) fs.rmSync(file);
+		const have = fs.existsSync(file) ? fs.statSync(file).size : 0;
+		console.log(`    ${path.basename(file)}: connection lost at ${(have / 1048576).toFixed(1)} MB, resuming (${i}/${tries})`);
+	}
+	throw new Error(`could not download ${url}`);
+}
+
 function download(tag, dir) {
 	const version = tag.replace(/^v/, '');
 	const zip = `Polestar-${version}.zip`;
-	const r = spawnSync('gh', ['release', 'download', tag, '-R', REPO, '-p', zip, '-p', 'SHA256SUMS', '-D', dir, '--clobber'], { encoding: 'utf8' });
-	if (r.status !== 0) {
-		for (const f of [zip, 'SHA256SUMS']) {
-			const c = spawnSync('curl', ['-fsSL', '-o', path.join(dir, f), `https://github.com/${REPO}/releases/download/${tag}/${f}`]);
-			if (c.status !== 0) throw new Error(`could not download ${f} of Polestar ${tag}`);
+	const cache = path.join(CACHE, tag);
+	fs.mkdirSync(cache, { recursive: true });
+	const base = `https://github.com/${REPO}/releases/download/${tag}`;
+	const sumsFile = path.join(cache, 'SHA256SUMS');
+	if (!fs.existsSync(sumsFile)) fetchFile(`${base}/SHA256SUMS`, sumsFile);
+	const sums = fs.readFileSync(sumsFile, 'utf8');
+	const want = (sums.split('\n').find((l) => l.endsWith(`  ${zip}`)) || '').split(/\s+/)[0];
+	if (!want) throw new Error(`SHA256SUMS of ${tag} has no ${zip}`);
+	const zipFile = path.join(cache, zip);
+	if (!fs.existsSync(zipFile) || sha256(zipFile) !== want) {
+		fetchFile(`${base}/${zip}`, zipFile);
+		const got = sha256(zipFile);
+		if (got !== want) {
+			fs.rmSync(zipFile);
+			throw new Error(`${zip}: checksum ${got} does not match SHA256SUMS (${want}); removed, run sync again`);
 		}
 	}
-	const sums = fs.readFileSync(path.join(dir, 'SHA256SUMS'), 'utf8');
-	const want = (sums.split('\n').find((l) => l.endsWith(`  ${zip}`)) || '').split(/\s+/)[0];
-	const got = crypto.createHash('sha256').update(fs.readFileSync(path.join(dir, zip))).digest('hex');
-	if (!want || want !== got) throw new Error(`${zip}: checksum ${got} does not match SHA256SUMS (${want || 'missing'})`);
-	execFileSync('unzip', ['-q', '-o', zip], { cwd: dir });
+	execFileSync('unzip', ['-q', '-o', zipFile], { cwd: dir });
 	return dir;
 }
 
