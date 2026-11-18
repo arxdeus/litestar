@@ -64,7 +64,7 @@ const KEEP = [
 	'tests/helpers/lua.js',
 	'tests/lua/wow_stub.lua', 'tests/lua/stub_world.lua', 'tests/lua/stub_settings.lua', 'tests/lua/stub_encoding.lua',
 	'.gitignore', '.gitattributes', '.editorconfig', 'LICENSE', 'LICENSE-EXCEPTION.md', 'THIRD_PARTY.md',
-	'README.md', 'AGENTS.md', 'package.json',
+	'README.md', 'AGENTS.md', 'SYNC.md', 'package.json',
 ];
 // Inside the kept core, files of features Litestar cut (a merge may bring
 // them back as new files): removed again after the merge.
@@ -75,7 +75,7 @@ const CUT = [
 // Litestar's own files: in a conflict, Litestar's side wins without asking.
 // The Russian interface file keeps Litestar's lines; the release's
 // translations fill the keys still left to translate (step 4).
-const OURS = ['README.md', 'AGENTS.md', '.gitignore', '.gitattributes', 'package.json', 'addon/Polestar_ruRU/Interface.lua'];
+const OURS = ['README.md', 'AGENTS.md', 'SYNC.md', '.gitignore', '.gitattributes', 'package.json', 'addon/Polestar_ruRU/Interface.lua'];
 let upstreamRu = null;
 
 function kept(file) {

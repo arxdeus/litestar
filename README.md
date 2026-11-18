@@ -40,6 +40,8 @@ node tools/litestar.js i18n sync|check|todo   # the Russian interface strings
 
 ### How sync works
 
+Step by step, in Russian: [SYNC.md](SYNC.md).
+
 `sync` takes **only the content** of a Polestar release, never its code:
 the guides, the Codex, the quest and item data, the walking maps and the
 Russian guide texts and names, from the release zip (checksum checked).
