@@ -20,7 +20,13 @@ Litestar берёт у Polestar только **контент**: гайды, Cod
 ```sh
 node tools/litestar.js sync              # последний релиз Polestar
 node tools/litestar.js sync v0.4.0.2     # конкретный релиз
+node tools/litestar.js sync next         # ещё не выпущенные правки гайдов из ветки next
 ```
+
+`sync next` берёт контент не из zip, а из git: гайды, карты маршрутов,
+ItemDB и русские тексты гайдов лежат в репозитории Polestar уже собранными. Codex и
+QuestDB собираются только к релизу, они остаются от последнего релиза.
+Код Polestar и тут не берётся. Следующий `sync` с релизом заменит всё целиком.
 
 Что происходит:
 
