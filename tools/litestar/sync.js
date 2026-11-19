@@ -77,6 +77,7 @@ const CUT = [
 // translations fill the keys still left to translate (step 4).
 const OURS = ['README.md', 'AGENTS.md', 'SYNC.md', '.gitignore', '.gitattributes', 'package.json', 'addon/Polestar_ruRU/Interface.lua'];
 let upstreamRu = null;
+let fromGit = false; // content from a branch (sync next), not a release zip
 
 function kept(file) {
 	if (CUT.some((p) => file.startsWith(p))) return false;
@@ -201,11 +202,33 @@ function tocVersion(dir) {
 	return m ? m[1] : null;
 }
 
-function replaceData(unpacked) {
+// The content of a branch (Polestar's `next`: the guide fixes not released
+// yet), from git: the compiled guide packs, the walking maps, the item data
+// and the Russian guide texts are committed there. The Codex and the QuestDB
+// are built only for a release: they stay as the last release left them.
+function fromBranch(branch, dir) {
+	if (gitOk(['remote', 'get-url', REMOTE]).status !== 0) git(['remote', 'add', REMOTE, `https://github.com/${REPO}.git`]);
+	let fetched = false;
+	for (let i = 1; i <= 5 && !fetched; i++) {
+		fetched = gitOk(['fetch', '-q', '--no-tags', REMOTE, `+refs/heads/${branch}:refs/remotes/${REMOTE}/${branch}`]).status === 0;
+		if (!fetched) console.log(`    fetch failed, again (${i}/5)`);
+	}
+	if (!fetched) throw new Error(`could not fetch ${REMOTE}/${branch}`);
+	const ref = `${REMOTE}/${branch}`;
+	const inGit = [...DATA, LANGUAGE].filter((d) => gitOk(['cat-file', '-e', `${ref}:addon/${d}`]).status === 0);
+	const tar = execFileSync('git', ['archive', '--format=tar', ref, ...inGit.map((d) => `addon/${d}`)], { cwd: ROOT, maxBuffer: 1024 * 1024 * 1024 });
+	execFileSync('tar', ['-x', '-C', dir, '--strip-components=1'], { input: tar, maxBuffer: 1024 * 1024 * 1024 });
+	return { dir, commit: git(['rev-parse', '--short', ref]) };
+}
+
+function replaceData(unpacked, partial) {
 	const changed = [];
 	for (const name of DATA) {
 		const from = path.join(unpacked, name);
-		if (!fs.existsSync(from)) throw new Error(`the release has no ${name}`);
+		if (!fs.existsSync(from)) {
+			if (partial) continue;
+			throw new Error(`the release has no ${name}`);
+		}
 		const to = path.join(ROOT, 'addon', name);
 		fs.rmSync(to, { recursive: true, force: true });
 		fs.cpSync(from, to, { recursive: true });
@@ -247,6 +270,7 @@ function compatibility(unpacked) {
 	const problems = [];
 	for (const name of [...DATA, LANGUAGE]) {
 		const toc = path.join(unpacked, name, `${name}.toc`);
+		if (!fs.existsSync(path.join(unpacked, name)) && fromGit) continue;
 		if (!fs.existsSync(toc)) { problems.push(`${name}: not in the release`); continue; }
 		const t = fs.readFileSync(toc, 'utf8');
 		const f = t.match(/^## X-Polestar-Format: (\d+)/m);
@@ -258,7 +282,11 @@ function compatibility(unpacked) {
 function main(args) {
 	const flags = new Set(args.filter((a) => a.startsWith('--')));
 	const tag = args.find((a) => !a.startsWith('--')) || latestTag();
-	const version = tag.replace(/^v/, '');
+	// A branch name (next) instead of a release tag: its content from git.
+	const branch = /^v\d/.test(tag) ? null : tag;
+	if (branch && flags.has('--engine')) throw new Error('--engine takes a release tag, not a branch');
+	fromGit = !!branch;
+	let version = tag.replace(/^v/, '');
 	console.log(`Litestar sync with Polestar ${tag}`);
 
 	if (flags.has('--engine')) {
@@ -284,12 +312,23 @@ function main(args) {
 	}
 
 	if (git(['status', '--porcelain', '--untracked-files=no', '--', 'addon'])) throw new Error('addon/ has uncommitted changes: commit or stash them first');
-	step(1, `the ${tag} release`);
+	step(1, branch ? `the ${branch} branch` : `the ${tag} release`);
 	const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'litestar-sync-'));
+	let label = tag;
 	try {
-		const unpacked = download(tag, tmp);
-		const got = tocVersion(path.join(unpacked, 'Polestar_Guides'));
-		if (got !== version) throw new Error(`the release zip's guides say ${got}, not ${version}`);
+		let unpacked;
+		if (branch) {
+			const b = fromBranch(branch, tmp);
+			unpacked = b.dir;
+			// The branch's guides carry the last release's version.
+			version = tocVersion(path.join(unpacked, 'Polestar_Guides'));
+			label = `${branch} ${b.commit}`;
+			console.log(`    ${REMOTE}/${branch} at ${b.commit} (guides say ${version})`);
+		} else {
+			unpacked = download(tag, tmp);
+			const got = tocVersion(path.join(unpacked, 'Polestar_Guides'));
+			if (got !== version) throw new Error(`the release zip's guides say ${got}, not ${version}`);
+		}
 		step(2, 'compatibility');
 		const problems = compatibility(unpacked);
 		if (problems.length && !flags.has('--force')) {
@@ -301,9 +340,9 @@ function main(args) {
 		}
 		console.log('    every pack in a format the engine reads');
 		step(3, 'content');
-		replaceData(unpacked);
+		replaceData(unpacked, !!branch);
 		setCoreVersion(version);
-		console.log(`    ${DATA.length} content folders and ${LANGUAGE}'s guide texts replaced (${version})`);
+		console.log(`    content folders and ${LANGUAGE}'s guide texts replaced (${branch ? label : version})${branch ? '; Codex and QuestDB stay the last release\'s' : ''}`);
 	} finally {
 		fs.rmSync(tmp, { recursive: true, force: true });
 	}
@@ -329,7 +368,7 @@ function main(args) {
 	const changes = git(['status', '--porcelain']);
 	if (changes) {
 		git(['add', '-A', 'addon', 'package.json']);
-		git(['commit', '-q', '-m', `Litestar: guides of Polestar ${tag}`]);
+		git(['commit', '-q', '-m', `Litestar: guides of Polestar ${label}`]);
 		console.log(`    committed: ${git(['log', '--oneline', '-1'])}`);
 	}
 	if (!flags.has('--no-install')) require('./install').main([]);
