@@ -37,6 +37,12 @@ local function mark(q)
 	return NQ and NQ.Mark(q) or ""
 end
 
+-- A drop chance in percent as text: "66%", "4.5%", "0.25%".
+local function chanceText(chance)
+	if chance >= 10 then return ("%d%%"):format(math.floor(chance + 0.5)) end
+	return (("%.2f"):format(chance):gsub("0+$", ""):gsub("%.$", "")) .. "%"
+end
+
 local function addObjectiveLines(tt, list, selfKind, selfID, selfName)
 	if not list then return 0 end
 	local qc, dim, ok = Q.Color("quest"), Q.Color("textDim"), Q.Color("success")
@@ -52,6 +58,12 @@ local function addObjectiveLines(tt, list, selfKind, selfID, selfName)
 			what = L["Talk to"] .. " " .. o.name .. " " .. what
 		elseif not isSelf and o.name then
 			what = o.name .. " " .. what
+		end
+		-- On a mob that drops an item still needed, or an object it comes
+		-- out of: how often (qol.questDropChance).
+		if o.kind == 2 and not o.done and selfID and (selfKind == 1 or selfKind == 3) and ns.Get("qol.questDropChance") then
+			local chance = selfKind == 1 and Q.GetDropChance(o.id, selfID) or selfKind == 3 and Q.GetObjectDropChance(o.id, selfID)
+			if chance and chance > 0 then what = what .. "  " .. chanceText(chance) end
 		end
 		addLine(tt, (e.title or ("Quest " .. o.q)) .. mark(o.q) .. ":", what, qc, (o.done or e.ready) and ok or dim)
 		added = added + 1

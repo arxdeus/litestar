@@ -375,6 +375,9 @@ local paint -- below
 local function newCard(parent)
 	local F = CreateFrame("Frame", nil, parent)
 	F:Hide()
+	-- Its text keeps the general size (ui.textSize), not the guide window's
+	-- it sits in.
+	Theme.TextScope(F, false)
 	F.Glow = F:CreateTexture(nil, "BACKGROUND", nil, 1)
 	F.Glow:SetTexture(Theme.Media("white"))
 	F.Glow:SetAllPoints(F)

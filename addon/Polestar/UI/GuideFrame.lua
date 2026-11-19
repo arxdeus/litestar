@@ -2708,6 +2708,8 @@ GF.Part(function(GF)
 		readMetrics()
 		handOver()
 		F = CreateFrame("Frame", GF.live and "PolestarGuideFrame" or nil, GF.live and ns.UIParent or GF.parent)
+		-- Its text follows the guide window's own size (ui.guideTextSize).
+		Theme.TextScope(F, "ui.guideTextSize")
 		if GF.live then
 			F:SetFrameStrata("MEDIUM")
 			F:SetClampedToScreen(true)

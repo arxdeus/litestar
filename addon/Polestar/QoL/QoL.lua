@@ -47,6 +47,7 @@ local defaults = {
 	buttonTextSide = "right", -- which side of the button its name sits on
 	xpTracker = true,
 	xpTargetMark = true,     -- the guide's level target on the game's XP bar
+	questXPOverlay = true,   -- completed quests' XP on the game's XP bar and in its tooltip (QoL/QuestXP.lua)
 	boostedRest = true,      -- Boosted Rest and the sleeping bag on the XP line, the party's in the party panel
 	sellJunk = true,
 	autoRepair = true,

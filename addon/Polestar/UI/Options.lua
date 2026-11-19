@@ -153,6 +153,7 @@ local MOVED = {
 	["qol.deathHelper"] = { L["Guide"], L["Arrow & routes"], L["Arrow"] },
 	["qol.xpTracker"] = { L["Guide"], L["Window"], L["What it shows"] },
 	["qol.xpTargetMark"] = { L["Guide"], L["Window"], L["What it shows"] },
+	["qol.questXPOverlay"] = { L["Guide"], L["Window"], L["What it shows"] },
 	["qol.flightHighlight"] = { L["Guide"], L["Arrow & routes"], L["Routes"] },
 }
 local function hiddenControl(c)
@@ -440,6 +441,9 @@ local BUILTIN = {
 			help = L["With Transparent, the tabs and the step bar stay on screen instead of only under the cursor."],
 			search = "transparent, bar, header, readable, always, show" },
 		{ kind = "slider", key = "ui.scale", label = L["Window scale"], min = 0.6, max = 1.6, step = 0.05, format = percent, search = "size, bigger, smaller, zoom" },
+		{ kind = "slider", key = "ui.guideTextSize", label = L["Text size"], min = 0.8, max = 1.4, step = 0.05, format = percent,
+			help = L["The size of the guide window's text, apart from its scale."],
+			search = "text size, font size, bigger text, smaller text, readability, larger, guide text" },
 		{ kind = "slider", key = "ui.width", label = L["Width"], min = 260, max = 560, step = 10, format = "%d", search = "wide, wider, size" },
 		{ kind = "slider", key = "ui.opacity", label = L["Window opacity"], min = 0.3, max = 1, step = 0.05, format = percent, search = "transparency, alpha, see through",
 			help = L["The whole guide window, text included."] },

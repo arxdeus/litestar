@@ -41,6 +41,7 @@ ns.RegisterDefaults("ui", {
 	classCardSound = true, -- the class-quest card's and the class quest heads-up's chime (UI/ClassCard.lua, UI/ClassToast.lua)
 	skin = "blizzard", -- slim build: the game's own look only (Theme.lua, FIXED)
 	textSize = 1,
+	guideTextSize = 1, -- 0.8..1.4: the guide window's text size (Theme.TextScope)
 	menuScale = 1, -- options and picker windows
 	-- Every window's frame (Theme.WindowBorder, the "windowBorder" token):
 	border = true, -- the window border

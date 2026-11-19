@@ -563,6 +563,7 @@ L["Quest marker size"] = "Размер меток заданий"
 L["The size of every quest marker on the world map and the minimap."] = "Размер всех меток заданий на карте мира и мини-карте."
 L["Timed quest alerts"] = "Оповещения о заданиях на время"
 L["A chat line and a sound when a timed quest has 5 minutes left, again at 1 minute, and if it fails. The guide window always shows the time left."] = "Строка в чате и звук, когда у задания на время остаётся 5 минут, снова за 1 минуту и если оно провалено. Окно руководства всегда показывает оставшееся время."
+L["On a mob that drops a quest item you still need, or an object it comes out of, show how often."] = "На существе, с которого падает ещё нужный предмет задания, или на объекте, из которого он добывается, показывать, как часто он выпадает."
 
 -- Quests/Party.lua
 L["Party"] = "Группа"
@@ -817,6 +818,8 @@ L["Boosted Rest status"] = "Статус «Улучшенного отдыха»
 L["How long the campfire's Boosted Rest lasts and the Cozy Sleeping Bag's cooldown, under the guide window's XP line; your party's Boosted Rest in the party panel."] = "Сколько длится «Улучшенный отдых» от костра и время восстановления «Уютного спального мешка» — под строкой опыта в окне гайда; «Улучшенный отдых» вашей группы — на панели группы."
 L["The target button and the step key ping the mob they target, so your group sees it behind rocks and buildings. Never in a raid unless you lead or assist."] = "Кнопка цели и клавиша шага отмечают пингом выбранного противника, чтобы группа видела его за скалами и зданиями. В рейде только если вы лидер или помощник."
 L["Scale of the quest item, Hearthstone and target buttons. Drag one to move them all."] = "Масштаб кнопок предмета задания, камня возвращения и выбора цели. Перетащите одну, чтобы переместить все."
+L["Completed quest XP"] = "Опыт за выполненные задания"
+L["Shows XP from completed quests you can turn in on the game's XP bar and in its tooltip."] = "Показывает опыт за выполненные задания, которые можно сдать, на полосе опыта игры и в её подсказке."
 
 -- Lookup/Sources.lua
 L["Alliance only"] = "Только Альянс"
@@ -1485,6 +1488,8 @@ L["Look"] = "Вид"
 L["The windows and the arrow, in the game's own look. Right-click a setting to reset it."] = "Окна и стрелка в стандартном стиле игры. Правый щелчок по настройке сбрасывает её."
 L["The whole guide window, text included."] = "Всё окно гайда, включая текст."
 L["Open Polestar settings"] = "Открыть настройки Polestar"
+L["Text size"] = "Размер текста"
+L["The size of the guide window's text, apart from its scale."] = "Размер текста окна гайда, отдельно от его масштаба."
 
 -- Rares/Options.lua
 L["%d s"] = "%d с"
@@ -2096,3 +2101,13 @@ L["Show the journey"] = "Показывать путь"
 L["The route's steps in the guide window with a time for each, counting down: walks, lifts, boats and flights. Click the current step to skip it."] = "Шаги маршрута в окне гайда с обратным отсчетом времени для каждого: пешком, на подъемниках, кораблях и в полете. Щелкните по текущему шагу, чтобы пропустить его."
 L["Show planned turn-ins in Questie"] = "Показывать запланированные сдачи в Questie"
 L["Completed quests in Questie's tracker show their Polestar turn-in step. Earlier, skipped and unplanned hand-ins are flagged."] = "У выполненных заданий в трекере Questie показывается шаг сдачи из Polestar. Ранние, пропущенные и незапланированные сдачи отмечаются."
+
+-- QoL/QuestXP.lua
+L["+1 level"] = "+1 уровень"
+L["Current XP"] = "Текущий опыт"
+L["Rested XP"] = "Опыт отдыха"
+L["Completed quests"] = "Выполненные задания"
+L["Pending quest XP"] = "Опыт за сдачу заданий"
+L["After turn-ins: at least +1 level"] = "После сдачи: минимум +1 уровень"
+L["XP after turn-ins"] = "Опыт после сдачи"
+L["XP remaining after turn-ins"] = "Осталось опыта после сдачи"

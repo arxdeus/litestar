@@ -14,6 +14,7 @@ local function objectivesOff() return not ns.Get("qol.questDB") or not ns.Get("q
 local function areasOff() return objectivesOff() or ns.Get("qol.objectiveSpots") == "icons" end
 local function guideOff() return not ns.Get("qol.questDB") or not ns.Get("qol.guideHighlight") end
 local function platesOff() return not ns.Get("qol.questDB") or not ns.Get("qol.nameplateIcons") end
+local function tooltipsOff() return not ns.Get("qol.questDB") or not ns.Get("qol.questTooltips") end
 
 -- "Your level", "+5", "Any level" at the top of the slider.
 local function levelWindow(v)
@@ -71,6 +72,9 @@ Q.OPTIONS = {
 		controls = {
 			{ kind = "toggle", key = "qol.questTooltips", label = L["Quest tooltips"], disabled = dbOff, search = "tooltip, quest progress, mob quests",
 				help = L["Name the quests a mob, item or object is for, with your progress."] },
+			{ kind = "toggle", key = "qol.questDropChance", label = L["Drop chance"], disabled = tooltipsOff, child = true,
+				search = "drop rate, drop chance, loot chance, percent",
+				help = L["On a mob that drops a quest item you still need, or an object it comes out of, show how often."] },
 			{ kind = "toggle", key = "qol.questBagMarks", label = L["Quest marks in bags"], disabled = dbOff,
 				help = L["Mark bag items a quest still needs, in your log or ahead in your guide, until you hand the quest in."] },
 			{ kind = "toggle", key = "qol.questSellWarning", label = L["Offer to buy back quest items"], disabled = dbOff,
